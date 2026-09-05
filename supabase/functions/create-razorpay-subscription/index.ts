@@ -106,7 +106,10 @@ Deno.serve(async (req) => {
     .maybeSingle()
 
   if (planErr) {
-    return json({ error: `Plan lookup failed: ${planErr.message}` }, 500)
+    // TEMPORARY diagnostic: only the first few characters of the key ever
+    // in used (never the full secret) — safe to share, remove once resolved.
+    const keyPreview = SERVICE_ROLE_KEY ? `${SERVICE_ROLE_KEY.slice(0, 14)}… (len ${SERVICE_ROLE_KEY.length})` : '(empty)'
+    return json({ error: `Plan lookup failed: ${planErr.message} [key: ${keyPreview}]` }, 500)
   }
   if (!plan || !plan.is_active) {
     return json({ error: `Plan not found for slug "${planSlug}"` }, 404)
