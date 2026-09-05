@@ -19,12 +19,22 @@ const SECTIONS = [
   { key: 'audit', label: 'Audit Logs', icon: ScrollText },
 ]
 
-function GrantAdminForm({ onGranted }) {
+const ROLE_LABEL = { admin: 'Admin', super_admin: 'Super Admin' }
+
+function GrantAdminForm({ admins, onGranted }) {
   const toast = useToast()
-  const { grant } = useAdminRoleMutations()
+  const { grant, revoke } = useAdminRoleMutations()
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('admin')
   const [searching, setSearching] = useState(false)
+  const [pendingSwap, setPendingSwap] = useState(null) // { match, existingRoles, role }
+
+  const doGrant = async (match, targetRole) => {
+    await grant.mutateAsync({ userId: match.user_id, role: targetRole, reason: 'Granted via Admin Settings' })
+    toast.success(`${ROLE_LABEL[targetRole]} access granted to ${match.email}.`)
+    setEmail('')
+    onGranted?.()
+  }
 
   const submit = async (e) => {
     e.preventDefault()
@@ -37,10 +47,22 @@ function GrantAdminForm({ onGranted }) {
         toast.error('No user found with that email.')
         return
       }
-      await grant.mutateAsync({ userId: match.user_id, role, reason: `Granted via Admin Settings` })
-      toast.success(`${role === 'super_admin' ? 'Super admin' : 'Admin'} access granted to ${match.email}.`)
-      setEmail('')
-      onGranted?.()
+
+      const existingRoles = (admins ?? []).filter((a) => a.user_id === match.user_id).map((a) => a.role)
+
+      if (existingRoles.includes(role)) {
+        toast.info(`${match.email} already has ${ROLE_LABEL[role]} access.`)
+        return
+      }
+      if (existingRoles.length > 0) {
+        // Don't stack a second role on top — offer to replace the existing
+        // one(s) instead, so the admin list never ends up with a redundant
+        // duplicate entry for the same person.
+        setPendingSwap({ match, existingRoles, role })
+        return
+      }
+
+      await doGrant(match, role)
     } catch (err) {
       toast.error(friendlyError(err))
     } finally {
@@ -48,23 +70,54 @@ function GrantAdminForm({ onGranted }) {
     }
   }
 
+  const confirmSwap = async (reason) => {
+    const { match, existingRoles, role: targetRole } = pendingSwap
+    try {
+      for (const oldRole of existingRoles) {
+        await revoke.mutateAsync({ userId: match.user_id, role: oldRole, reason: reason || 'Replaced via Admin Settings' })
+      }
+      await doGrant(match, targetRole)
+      setPendingSwap(null)
+    } catch (err) {
+      toast.error(friendlyError(err))
+    }
+  }
+
   return (
-    <form onSubmit={submit} className="flex flex-col gap-2 sm:flex-row">
-      <input
-        type="email"
-        className="input flex-1"
-        placeholder="user@example.com"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
+    <>
+      <form onSubmit={submit} className="flex flex-col gap-2 sm:flex-row">
+        <input
+          type="email"
+          className="input flex-1"
+          placeholder="user@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <select className="input w-auto" value={role} onChange={(e) => setRole(e.target.value)}>
+          <option value="admin">Admin</option>
+          <option value="super_admin">Super Admin</option>
+        </select>
+        <button type="submit" className="btn-primary shrink-0" disabled={searching || grant.isPending}>
+          <UserPlus className="h-4 w-4" /> Grant
+        </button>
+      </form>
+
+      <ConfirmAdminAction
+        open={Boolean(pendingSwap)}
+        onClose={() => setPendingSwap(null)}
+        loading={revoke.isPending || grant.isPending}
+        tone="primary"
+        title={`Replace ${pendingSwap?.match.full_name || pendingSwap?.match.email}'s role?`}
+        message={
+          pendingSwap
+            ? `${pendingSwap.match.email} currently has ${pendingSwap.existingRoles.map((r) => ROLE_LABEL[r]).join(' & ')}. ` +
+              `This will remove that and grant ${ROLE_LABEL[pendingSwap.role]} instead.`
+            : undefined
+        }
+        confirmLabel="Replace role"
+        onConfirm={confirmSwap}
       />
-      <select className="input w-auto" value={role} onChange={(e) => setRole(e.target.value)}>
-        <option value="admin">Admin</option>
-        <option value="super_admin">Super Admin</option>
-      </select>
-      <button type="submit" className="btn-primary shrink-0" disabled={searching || grant.isPending}>
-        <UserPlus className="h-4 w-4" /> Grant
-      </button>
-    </form>
+    </>
   )
 }
 
@@ -90,7 +143,7 @@ function SecuritySection() {
       {isSuperAdmin && (
         <div>
           <p className="label mb-1.5">Grant admin access</p>
-          <GrantAdminForm />
+          <GrantAdminForm admins={admins} />
         </div>
       )}
 
