@@ -1,0 +1,12 @@
+{
+  "name": "MoneyFlow",
+  "short_name": "MoneyFlow",
+  "description": "Take control of your money.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#F5F7F6",
+  "theme_color": "#172321",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
