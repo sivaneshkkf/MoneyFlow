@@ -95,21 +95,17 @@ Deno.serve(async (req) => {
   }
   const userId = callerData.user.id
 
-  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
-
-  // The price always comes from the published plan row — never from the
-  // request body — so a tampered client can only ever buy the real price.
-  const { data: plan, error: planErr } = await admin
+  // Active plans are publicly readable (see plans_select_active RLS policy),
+  // so this read uses the caller's own session — no elevated privilege
+  // needed here, only for the best-effort cache-write further down.
+  const { data: plan, error: planErr } = await callerClient
     .from('subscription_plans')
     .select('id, slug, name, price_monthly, price_yearly, provider_plan_id_monthly, provider_plan_id_yearly, is_active')
     .eq('slug', planSlug)
     .maybeSingle()
 
   if (planErr) {
-    // TEMPORARY diagnostic: only the first few characters of the key ever
-    // in used (never the full secret) — safe to share, remove once resolved.
-    const keyPreview = SERVICE_ROLE_KEY ? `${SERVICE_ROLE_KEY.slice(0, 14)}… (len ${SERVICE_ROLE_KEY.length})` : '(empty)'
-    return json({ error: `Plan lookup failed: ${planErr.message} [key: ${keyPreview}]` }, 500)
+    return json({ error: `Plan lookup failed: ${planErr.message}` }, 500)
   }
   if (!plan || !plan.is_active) {
     return json({ error: `Plan not found for slug "${planSlug}"` }, 404)
@@ -137,7 +133,15 @@ Deno.serve(async (req) => {
         notes: { plan_slug: plan.slug, billing_cycle: billingCycle },
       })
       providerPlanId = rpPlan.id
-      await admin.from('subscription_plans').update({ [cachedPlanIdField]: providerPlanId }).eq('id', plan.id)
+      // Best-effort cache write: if this fails (e.g. an elevated-privilege
+      // misconfiguration), a fresh Razorpay Plan is simply created again next
+      // time — it must never block the checkout itself.
+      const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+      const { error: cacheErr } = await admin
+        .from('subscription_plans')
+        .update({ [cachedPlanIdField]: providerPlanId })
+        .eq('id', plan.id)
+      if (cacheErr) console.error('create-razorpay-subscription: failed to cache provider_plan_id', cacheErr)
     }
 
     const subscription = await razorpay('/subscriptions', {
