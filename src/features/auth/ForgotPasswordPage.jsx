@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import AuthShell from './AuthShell'
 import { useAuth } from './AuthProvider'
 import { useToast } from '../../components/common/ToastProvider'
+import { friendlyError } from '../../utils/errors'
 
 const schema = z.object({ email: z.string().email('Enter a valid email') })
 
@@ -18,9 +19,13 @@ export default function ForgotPasswordPage() {
   } = useForm({ resolver: zodResolver(schema) })
 
   const onSubmit = async ({ email }) => {
-    const { error } = await resetPassword(email)
-    if (error) toast.error('Unable to send the reset email.')
-    else toast.success('Password reset link sent.')
+    try {
+      const { error } = await resetPassword(email)
+      if (error) toast.error(friendlyError(error, 'Unable to send the reset email.'))
+      else toast.success('Password reset link sent.')
+    } catch (e) {
+      toast.error(friendlyError(e, 'Unable to send the reset email.'))
+    }
   }
 
   return (

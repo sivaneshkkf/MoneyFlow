@@ -1,11 +1,11 @@
 // Custom Plan / Request-a-Quote — presentation constants + pure helpers only.
 // The database (custom_plan_requests) is the single source of truth for
 // status/price; nothing here decides money.
+import { BUSINESS_INFO } from '../../config/businessConfig'
 
-// TODO: set your real WhatsApp Business number (with country code, no + or
-// spaces, e.g. '919876543210') before shipping — the button is hidden until
-// this is configured so a placeholder number is never dialled for real.
-export const WHATSAPP_BUSINESS_NUMBER = ''
+// The WhatsApp button only renders once BUSINESS_INFO.whatsappNumber is set
+// (see businessConfig.js) — a placeholder number is never dialled for real.
+export const WHATSAPP_BUSINESS_NUMBER = BUSINESS_INFO.whatsappNumber
 
 export const CUSTOM_PLAN_STATUS_META = {
   pending: { label: 'Pending review', tone: 'neutral' },

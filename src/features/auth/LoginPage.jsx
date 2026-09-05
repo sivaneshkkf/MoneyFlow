@@ -8,6 +8,7 @@ import AuthShell from './AuthShell'
 import GoogleButton from './GoogleButton'
 import { useAuth } from './AuthProvider'
 import { useToast } from '../../components/common/ToastProvider'
+import { friendlyError } from '../../utils/errors'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -33,13 +34,17 @@ export default function LoginPage() {
   } = useForm({ resolver: zodResolver(schema) })
 
   const onSubmit = async ({ email, password }) => {
-    const { error } = await signInWithPassword(email, password)
-    if (error) {
-      toast.error('Invalid email or password.')
-      return
+    try {
+      const { error } = await signInWithPassword(email, password)
+      if (error) {
+        toast.error(friendlyError(error, 'Incorrect email or password.'))
+        return
+      }
+      toast.success('Welcome back!')
+      navigate('/dashboard')
+    } catch (e) {
+      toast.error(friendlyError(e, 'Unable to sign in right now.'))
     }
-    toast.success('Welcome back!')
-    navigate('/dashboard')
   }
 
   return (

@@ -6,6 +6,7 @@ import AuthShell from './AuthShell'
 import GoogleButton from './GoogleButton'
 import { useAuth } from './AuthProvider'
 import { useToast } from '../../components/common/ToastProvider'
+import { friendlyError } from '../../utils/errors'
 
 const schema = z.object({
   fullName: z.string().min(2, 'Enter your name'),
@@ -24,17 +25,21 @@ export default function RegisterPage() {
   } = useForm({ resolver: zodResolver(schema) })
 
   const onSubmit = async ({ fullName, email, password }) => {
-    const { data, error } = await signUp(email, password, fullName)
-    if (error) {
-      toast.error(error.message || 'Unable to create your account.')
-      return
-    }
-    if (data.session) {
-      toast.success('Account created!')
-      navigate('/dashboard')
-    } else {
-      toast.success('Check your email to verify your account.')
-      navigate('/login')
+    try {
+      const { data, error } = await signUp(email, password, fullName)
+      if (error) {
+        toast.error(friendlyError(error, 'Unable to create your account.'))
+        return
+      }
+      if (data.session) {
+        toast.success('Account created!')
+        navigate('/dashboard')
+      } else {
+        toast.success('Check your email to verify your account.')
+        navigate('/login')
+      }
+    } catch (e) {
+      toast.error(friendlyError(e, 'Unable to create your account.'))
     }
   }
 

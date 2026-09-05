@@ -4,6 +4,7 @@ import { AuthProvider } from './features/auth/AuthProvider'
 import { ThemeProvider } from './features/settings/ThemeProvider'
 import { ToastProvider } from './components/common/ToastProvider'
 import ErrorBoundary from './components/common/ErrorBoundary'
+import GlobalErrorNotifier from './components/common/GlobalErrorNotifier'
 import RealtimeSync from './features/realtime/RealtimeSync'
 import AppRoutes from './routes/AppRoutes'
 
@@ -24,6 +25,7 @@ export default function App() {
         <BrowserRouter>
           <ThemeProvider>
             <ToastProvider>
+              <GlobalErrorNotifier />
               <AuthProvider>
                 <RealtimeSync />
                 <AppRoutes />

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import AuthShell from './AuthShell'
 import { useAuth } from './AuthProvider'
 import { useToast } from '../../components/common/ToastProvider'
+import { friendlyError } from '../../utils/errors'
 
 const schema = z
   .object({
@@ -24,13 +25,17 @@ export default function ResetPasswordPage() {
   } = useForm({ resolver: zodResolver(schema) })
 
   const onSubmit = async ({ password }) => {
-    const { error } = await updatePassword(password)
-    if (error) {
-      toast.error('Unable to update your password. The link may have expired.')
-      return
+    try {
+      const { error } = await updatePassword(password)
+      if (error) {
+        toast.error(friendlyError(error, 'Unable to update your password. The link may have expired.'))
+        return
+      }
+      toast.success('Password updated. Please sign in.')
+      navigate('/login')
+    } catch (e) {
+      toast.error(friendlyError(e, 'Unable to update your password. The link may have expired.'))
     }
-    toast.success('Password updated. Please sign in.')
-    navigate('/login')
   }
 
   return (

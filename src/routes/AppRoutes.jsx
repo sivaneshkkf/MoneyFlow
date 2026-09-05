@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from '../components/layout/AppLayout'
+import PublicLayout from '../components/layout/PublicLayout'
 import ProtectedRoute from '../features/auth/ProtectedRoute'
 import AdminRoute from '../features/admin/AdminRoute'
 import { useAuth } from '../features/auth/AuthProvider'
@@ -25,6 +26,10 @@ const AnalyticsPage = lazy(() => import('../features/analytics/AnalyticsPage'))
 const ReportsPage = lazy(() => import('../features/reports/ReportsPage'))
 const PricingPage = lazy(() => import('../features/subscription/pages/PricingPage'))
 const SubscriptionPage = lazy(() => import('../features/subscription/pages/SubscriptionPage'))
+const TermsPage = lazy(() => import('../features/legal/TermsPage'))
+const PrivacyPolicyPage = lazy(() => import('../features/legal/PrivacyPolicyPage'))
+const RefundPolicyPage = lazy(() => import('../features/legal/RefundPolicyPage'))
+const ContactPage = lazy(() => import('../features/legal/ContactPage'))
 const AdminLayout = lazy(() => import('../features/admin/components/AdminLayout'))
 const AdminDashboardPage = lazy(() => import('../features/admin/pages/AdminDashboardPage'))
 const AdminUsersPage = lazy(() => import('../features/admin/pages/AdminUsersPage'))
@@ -58,6 +63,14 @@ export default function AppRoutes() {
         <Route path="/forgot-password" element={<PublicOnly><ForgotPasswordPage /></PublicOnly>} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
+        <Route element={<PublicLayout />}>
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/refund-policy" element={<RefundPolicyPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+        </Route>
+
         <Route
           element={
             <ProtectedRoute>
@@ -80,7 +93,6 @@ export default function AppRoutes() {
           <Route path="/lending/:id" element={<LendingDetailPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
 
           <Route path="/settings" element={<SettingsLayout />}>
             <Route index element={<Navigate to="/settings/profile" replace />} />

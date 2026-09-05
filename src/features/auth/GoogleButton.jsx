@@ -1,5 +1,6 @@
 import { useAuth } from './AuthProvider'
 import { useToast } from '../../components/common/ToastProvider'
+import { friendlyError } from '../../utils/errors'
 
 export default function GoogleButton({ label = 'Continue with Google' }) {
   const { signInWithGoogle } = useAuth()
@@ -10,8 +11,12 @@ export default function GoogleButton({ label = 'Continue with Google' }) {
       type="button"
       className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-line bg-white py-3 text-sm font-semibold text-ink transition hover:bg-brand-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40 dark:border-white/10 dark:bg-white/5 dark:text-[#E7EDEB] dark:hover:bg-white/10"
       onClick={async () => {
-        const { error } = await signInWithGoogle()
-        if (error) toast.error('Unable to start Google sign-in. Please try again.')
+        try {
+          const { error } = await signInWithGoogle()
+          if (error) toast.error(friendlyError(error, 'Unable to start Google sign-in. Please try again.'))
+        } catch (e) {
+          toast.error(friendlyError(e, 'Unable to start Google sign-in. Please try again.'))
+        }
       }}
     >
       <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" aria-hidden="true">

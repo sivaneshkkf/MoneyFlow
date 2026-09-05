@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Check, Minus } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Check, Minus, ShieldCheck, Sparkles } from 'lucide-react'
 import clsx from 'clsx'
 import { PageContainer, Skeleton, ErrorState } from '../../../components/common'
+import Seo from '../../../components/common/Seo'
+import { useAuth } from '../../auth/AuthProvider'
 import { usePlans, useSubscription } from '../hooks/useSubscription'
 import { useSubscriptionMutations } from '../hooks/useSubscriptionMutations'
 import { useToast } from '../../../components/common/ToastProvider'
@@ -24,6 +27,29 @@ const COMPARISON_ROWS = [
   { key: 'financial_insights', kind: 'feature' },
 ]
 
+const FAQ = [
+  {
+    q: 'Can I cancel my subscription?',
+    a: 'Yes. You can cancel any time from Settings → Subscription. Cancelling stops future renewals — you keep your Pro or Custom plan access until the end of the billing period you\'ve already paid for.',
+  },
+  {
+    q: 'Can I change plans?',
+    a: 'You can upgrade to Pro whenever you like. To move back from Pro to Free, cancel your subscription — your account reverts to Free once the current billing period ends.',
+  },
+  {
+    q: 'How does billing work?',
+    a: 'Paid plans bill automatically on a monthly or yearly cycle, whichever you choose at checkout, through our payment partner Razorpay.',
+  },
+  {
+    q: 'What happens if my payment fails?',
+    a: 'Your subscription is marked past due and we (or Razorpay) will retry the payment. If it keeps failing, your plan may be paused until payment succeeds or you cancel.',
+  },
+  {
+    q: 'Can I request a custom plan?',
+    a: 'Yes — if Free and Pro don\'t quite fit, use "Request a Quote" below to tell us what you need. We\'ll get back to you with an offer, and you can negotiate the details with our team before accepting.',
+  },
+]
+
 function ComparisonCell({ plan, row }) {
   if (row.kind === 'feature') {
     const on = Boolean(plan.features?.[row.key])
@@ -38,6 +64,8 @@ function ComparisonCell({ plan, row }) {
 }
 
 export default function PricingPage() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const { data: plans, isLoading, isError, refetch } = usePlans()
   const { plan: currentPlan, isPro } = useSubscription()
   const { data: customOffer } = useMyCustomPlanOffer()
@@ -55,6 +83,10 @@ export default function PricingPage() {
   }, [pro])
 
   const onSelectPro = async () => {
+    if (!user) {
+      navigate('/register')
+      return
+    }
     try {
       const res = await checkout.mutateAsync({ planSlug: 'pro', billingCycle })
       if (res.status === 'redirect' && res.url) {
@@ -84,9 +116,14 @@ export default function PricingPage() {
 
   return (
     <PageContainer>
+      <Seo
+        title="Pricing"
+        description="Explore MoneyFlow plans and choose the right subscription for your financial tracking needs."
+      />
+
       <div className="mx-auto max-w-3xl text-center">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Choose the plan that fits your financial journey</h1>
-        <p className="mt-2 text-sm text-ink-soft sm:text-base">Start free and upgrade when you need more powerful tools.</p>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Simple pricing for better financial control</h1>
+        <p className="mt-2 text-sm text-ink-soft sm:text-base">Choose a plan that fits the way you manage your money.</p>
       </div>
 
       <div className="mt-6 flex items-center justify-center gap-2">
@@ -113,18 +150,35 @@ export default function PricingPage() {
       </div>
 
       <div className="mx-auto mt-8 grid max-w-3xl gap-6 sm:grid-cols-2">
-        <PricingCard plan={free} billingCycle={billingCycle} isCurrent={!isPro} onSelect={() => {}} />
+        <PricingCard plan={free} billingCycle={billingCycle} isCurrent={Boolean(user) && !isPro} onSelect={() => {}} />
         <PricingCard
           plan={pro}
           billingCycle={billingCycle}
-          isCurrent={isPro}
+          isCurrent={Boolean(user) && isPro}
           loading={checkout.isPending}
           onSelect={onSelectPro}
         />
       </div>
 
+      <p className="mx-auto mt-6 flex max-w-3xl items-center justify-center gap-1.5 text-center text-xs text-ink-soft">
+        <ShieldCheck className="h-3.5 w-3.5 text-success" /> Secure payments powered by Razorpay
+      </p>
+
       <div className="mx-auto mt-8 max-w-md">
-        <CustomOfferCard offer={customOffer} />
+        {user ? (
+          <CustomOfferCard offer={customOffer} />
+        ) : (
+          <div className="card p-6 text-center">
+            <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-700 dark:bg-white/5 dark:text-brand-400">
+              <Sparkles className="h-5 w-5" />
+            </span>
+            <h3 className="mt-3 text-base font-bold">Need something different?</h3>
+            <p className="mt-1 text-sm text-ink-soft">Create a free account to request a custom plan tailored to you.</p>
+            <Link to="/register" className="btn-primary mt-4">
+              Get Started
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="mx-auto mt-14 max-w-3xl">
@@ -148,7 +202,19 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {currentPlan && (
+      <div className="mx-auto mt-14 max-w-2xl">
+        <h2 className="mb-4 text-center text-lg font-bold">Frequently asked questions</h2>
+        <div className="card divide-y divide-line p-0 dark:divide-white/5">
+          {FAQ.map((f) => (
+            <div key={f.q} className="p-5">
+              <p className="text-sm font-semibold">{f.q}</p>
+              <p className="mt-1.5 text-sm text-ink-soft">{f.a}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {user && currentPlan && (
         <p className="mt-8 text-center text-xs text-ink-soft">
           You&apos;re currently on the <b>{currentPlan.name}</b> plan.
         </p>
