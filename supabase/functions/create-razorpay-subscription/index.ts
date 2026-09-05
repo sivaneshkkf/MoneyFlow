@@ -1,17 +1,22 @@
-// supabase/functions/create-custom-plan-checkout/index.ts
+// supabase/functions/create-razorpay-subscription/index.ts
 //
-// Turns an accepted custom_plan_requests row into a real Razorpay
-// subscription and hands the browser just enough to open Razorpay's
-// Checkout widget. This is the ONLY place the Razorpay secret key is used
-// for creating a charge — it never reaches the browser.
+// Turns a regular Free -> Pro upgrade into a real Razorpay subscription and
+// hands the browser just enough to open Razorpay's Checkout widget. This is
+// the ONLY place the Razorpay secret key is used for a *regular* plan
+// checkout (see create-custom-plan-checkout for the Custom Plan equivalent).
 //
-// The frontend calls this AFTER accept_custom_plan_offer() has already
-// flipped the row to 'payment_pending' (see 027_custom_plan_requests.sql).
-// This function re-reads the row itself and re-validates everything before
-// creating anything at Razorpay — it never trusts a price, user id or
-// billing cycle passed in the request body. The only input is the row id.
+// The frontend calls this directly from the Pricing page. It never sends a
+// price — only which plan slug ('pro') and billing cycle the user picked.
+// The amount charged always comes from subscription_plans in the database,
+// never from the request body, so a tampered client request can only ever
+// buy the real, published price.
 //
-// Deploy:  supabase functions deploy create-custom-plan-checkout
+// Activation itself never happens here: this only creates the Razorpay
+// subscription and returns its id. Only the subscription-webhook Edge
+// Function, once Razorpay confirms payment, is allowed to mark anything
+// active (see subscription-webhook/index.ts).
+//
+// Deploy:  supabase functions deploy create-razorpay-subscription
 // Secrets required: RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, SB_SECRET_KEY,
 // SB_PUBLISHABLE_KEY
 // (SUPABASE_URL is provided automatically by the platform. The other two
@@ -72,14 +77,15 @@ Deno.serve(async (req) => {
   const jwt = authHeaderIn.replace(/^Bearer\s+/i, '')
   if (!jwt) return json({ error: 'Missing authorization' }, 401)
 
-  let body: { custom_plan_request_id?: string }
+  let body: { plan_slug?: string; billing_cycle?: string }
   try {
     body = await req.json()
   } catch {
     return json({ error: 'Invalid JSON body' }, 400)
   }
-  const requestId = body.custom_plan_request_id
-  if (!requestId) return json({ error: 'custom_plan_request_id is required' }, 400)
+  const planSlug = body.plan_slug
+  const billingCycle = body.billing_cycle === 'yearly' ? 'yearly' : 'monthly'
+  if (!planSlug) return json({ error: 'plan_slug is required' }, 400)
 
   // Identify the caller from their own session — not from anything in the body.
   const callerClient = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: `Bearer ${jwt}` } } })
@@ -91,56 +97,56 @@ Deno.serve(async (req) => {
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 
-  // Re-derive everything from the database. The row must belong to this
-  // user and must already be payment_pending (set by accept_custom_plan_offer,
-  // which itself re-checked status/expiry) — never trust the browser.
-  const { data: reqRow, error: reqErr } = await admin
-    .from('custom_plan_requests')
-    .select('id, user_id, admin_price, billing_cycle, offer_source, status')
-    .eq('id', requestId)
+  // The price always comes from the published plan row — never from the
+  // request body — so a tampered client can only ever buy the real price.
+  const { data: plan, error: planErr } = await admin
+    .from('subscription_plans')
+    .select('id, slug, name, price_monthly, price_yearly, provider_plan_id_monthly, provider_plan_id_yearly, is_active')
+    .eq('slug', planSlug)
     .maybeSingle()
 
-  if (reqErr || !reqRow) return json({ error: 'Offer not found' }, 404)
-  if (reqRow.user_id !== userId) return json({ error: 'Forbidden' }, 403)
-  if (reqRow.status !== 'payment_pending') {
-    return json({ error: 'This offer is not ready for payment' }, 409)
+  if (planErr) {
+    return json({ error: `Plan lookup failed: ${planErr.message}` }, 500)
   }
-  if (!reqRow.admin_price || reqRow.admin_price <= 0) {
-    return json({ error: 'This offer has no price set' }, 422)
+  if (!plan || !plan.is_active) {
+    return json({ error: `Plan not found for slug "${planSlug}"` }, 404)
   }
+  const amount = billingCycle === 'yearly' ? Number(plan.price_yearly) : Number(plan.price_monthly)
+  if (!amount || amount <= 0) {
+    return json({ error: 'This plan has no online price set' }, 422)
+  }
+
+  const cachedPlanIdField = billingCycle === 'yearly' ? 'provider_plan_id_yearly' : 'provider_plan_id_monthly'
 
   try {
-    // Razorpay has no notion of an arbitrary per-customer subscription price
-    // without a Plan object, so one is created on the fly for this exact
-    // negotiated amount, then a Subscription is created against it. The
-    // amount always comes from admin_price — never from the request body.
-    const plan = await razorpay('/plans', {
-      period: reqRow.billing_cycle === 'yearly' ? 'yearly' : 'monthly',
-      interval: 1,
-      item: {
-        name: 'MoneyFlow Custom Plan',
-        amount: Math.round(Number(reqRow.admin_price) * 100), // paise
-        currency: 'INR',
-      },
-      notes: { custom_plan_request_id: reqRow.id },
-    })
+    // Reuse the Razorpay Plan object created for this (plan, cycle) pair on
+    // an earlier checkout, if any, instead of creating a new one every time.
+    let providerPlanId = plan[cachedPlanIdField] as string | null
+    if (!providerPlanId) {
+      const rpPlan = await razorpay('/plans', {
+        period: billingCycle,
+        interval: 1,
+        item: {
+          name: `MoneyFlow ${plan.name}`,
+          amount: Math.round(amount * 100), // paise
+          currency: 'INR',
+        },
+        notes: { plan_slug: plan.slug, billing_cycle: billingCycle },
+      })
+      providerPlanId = rpPlan.id
+      await admin.from('subscription_plans').update({ [cachedPlanIdField]: providerPlanId }).eq('id', plan.id)
+    }
 
     const subscription = await razorpay('/subscriptions', {
-      plan_id: plan.id,
+      plan_id: providerPlanId,
       customer_notify: 1,
-      total_count: reqRow.billing_cycle === 'yearly' ? 5 : 60, // renews for years; cancel any time
+      total_count: billingCycle === 'yearly' ? 5 : 60, // renews for years; cancel any time
       notes: {
         moneyflow_user_id: userId,
-        custom_plan_request_id: reqRow.id,
-        offer_source: reqRow.offer_source,
-        billing_cycle: reqRow.billing_cycle,
+        plan_slug: plan.slug,
+        billing_cycle: billingCycle,
       },
     })
-
-    await admin
-      .from('custom_plan_requests')
-      .update({ provider: 'razorpay', provider_subscription_id: subscription.id, updated_at: new Date().toISOString() })
-      .eq('id', reqRow.id)
 
     return json({ key_id: RAZORPAY_KEY_ID, subscription_id: subscription.id })
   } catch (e) {

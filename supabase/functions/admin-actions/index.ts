@@ -19,14 +19,18 @@
 // same outcome.
 //
 // Deploy:  supabase functions deploy admin-actions
+// Secrets required: SB_SECRET_KEY, SB_PUBLISHABLE_KEY (Project Settings >
+// API Keys — this project uses the newer Publishable/Secret key system, not
+// legacy anon/service_role JWTs, and custom secrets can't use a SUPABASE_
+// prefix, so they're named SB_* here; SUPABASE_URL is provided automatically).
 // (JWT verification IS wanted here — the caller must be a signed-in admin —
 //  so this one is deployed WITHOUT --no-verify-jwt, unlike subscription-webhook.)
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
+const SERVICE_ROLE_KEY = Deno.env.get('SB_SECRET_KEY')!
+const ANON_KEY = Deno.env.get('SB_PUBLISHABLE_KEY')!
 
 // 10 years — effectively indefinite, reversible via 'none'.
 const BAN_DURATION = '87600h'

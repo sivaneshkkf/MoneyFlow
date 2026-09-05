@@ -1,25 +1,33 @@
 import { supabase } from '../../../lib/supabaseClient'
 
 /**
- * Payment-provider abstraction. No provider is configured yet, so this
- * intentionally does NOT activate anything — a subscription only ever
- * becomes Pro through the subscription-webhook Edge Function once real
- * money has moved. This just starts (or reports that it cannot start) a
- * checkout session, so the rest of the app never has to know which
- * provider (Razorpay / Stripe / Cashfree / ...) is wired up.
+ * Creates a real Razorpay subscription for a regular (non-Custom) plan
+ * upgrade. Activation itself never happens here — only the
+ * subscription-webhook Edge Function, once Razorpay confirms payment, is
+ * allowed to mark anything active. If payments aren't configured yet
+ * (secrets missing on the backend), the Edge Function reports that plainly
+ * instead of faking a successful upgrade.
  *
- * @returns {Promise<{status: 'redirect'|'not_configured', url?: string, message?: string}>}
+ * @returns {Promise<{status: 'checkout'|'not_configured', key_id?: string, subscription_id?: string, message?: string}>}
  */
 export async function createCheckout({ planSlug, billingCycle }) {
-  void planSlug
-  void billingCycle
-  // TODO: once a provider is chosen, call its checkout-session Edge Function
-  // here and return { status: 'redirect', url }. Until then, be honest about
-  // it instead of faking a successful upgrade.
-  return {
-    status: 'not_configured',
-    message: 'Online payments are not set up yet — please check back soon.',
+  const { data, error } = await supabase.functions.invoke('create-razorpay-subscription', {
+    body: { plan_slug: planSlug, billing_cycle: billingCycle },
+  })
+  if (error) {
+    // A non-2xx from the function (e.g. 503 "not configured yet") lands here
+    // as a FunctionsHttpError whose `context` is the raw Response — read its
+    // JSON body for the specific message the function returned.
+    let message = 'Online payments are not set up yet — please check back soon.'
+    try {
+      const body = await error.context?.json()
+      if (body?.error) message = body.error
+    } catch {
+      // Keep the default message if the error body isn't JSON.
+    }
+    return { status: 'not_configured', message }
   }
+  return { status: 'checkout', key_id: data.key_id, subscription_id: data.subscription_id }
 }
 
 export async function fetchMySubscription() {

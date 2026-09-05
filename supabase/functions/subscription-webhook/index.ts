@@ -15,8 +15,13 @@
 // to change.
 //
 // Required secrets (Supabase project settings -> Edge Functions -> Secrets;
-// SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically):
-//   SUBSCRIPTION_WEBHOOK_SECRET   — provider webhook signing secret
+// SUPABASE_URL is provided automatically):
+//   SB_SECRET_KEY                 — this project's Secret key (Project
+//                                    Settings > API Keys) — the newer
+//                                    equivalent of the legacy service_role
+//                                    key. Named SB_* (not SUPABASE_*) because
+//                                    custom secrets can't use that prefix.
+//   SUBSCRIPTION_WEBHOOK_SECRET    — provider webhook signing secret
 //
 // Deploy:
 //   supabase functions deploy subscription-webhook --no-verify-jwt
@@ -27,7 +32,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const SERVICE_ROLE_KEY = Deno.env.get('SB_SECRET_KEY')!
 const WEBHOOK_SECRET = Deno.env.get('SUBSCRIPTION_WEBHOOK_SECRET') ?? ''
 
 // Service-role client: intentionally never imported by, or reachable from,

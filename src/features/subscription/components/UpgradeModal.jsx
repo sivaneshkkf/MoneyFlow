@@ -27,10 +27,7 @@ export default function UpgradeModal({ open, onClose, title = 'Unlock more with 
   const onUpgrade = async () => {
     try {
       const res = await checkout.mutateAsync({ planSlug: 'pro', billingCycle: 'monthly' })
-      if (res.status === 'redirect' && res.url) {
-        window.location.href = res.url
-        return
-      }
+      if (res.status === 'checkout') return
       toast.info(res.message ?? 'Payments are not set up yet.')
     } catch (e) {
       toast.error(friendlyError(e, 'Unable to start checkout right now.'))
