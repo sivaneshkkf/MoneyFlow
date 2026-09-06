@@ -6,8 +6,9 @@
 // renew, be marked past_due, or expire. The React app can never do this —
 // `subscriptionService.createCheckout()` only starts a checkout session;
 // this function is what the provider calls back once money has actually
-// moved, and only it holds the service-role key that can bypass RLS on
-// user_subscriptions / subscription_events.
+// moved. The actual writes happen inside a SECURITY DEFINER RPC (see
+// apply_subscription_webhook_event below) so they bypass RLS/grants
+// regardless of which Postgres role this function's own API key resolves to.
 //
 // Provider-agnostic by design: swap the two functions marked "PROVIDER-
 // SPECIFIC" below for Razorpay / Stripe / Cashfree once one is chosen.
@@ -16,11 +17,17 @@
 //
 // Required secrets (Supabase project settings -> Edge Functions -> Secrets;
 // SUPABASE_URL is provided automatically):
-//   SB_SECRET_KEY                 — this project's Secret key (Project
-//                                    Settings > API Keys) — the newer
-//                                    equivalent of the legacy service_role
-//                                    key. Named SB_* (not SUPABASE_*) because
-//                                    custom secrets can't use that prefix.
+//   SB_PUBLISHABLE_KEY             — this project's Publishable key (Project
+//                                    Settings > API Keys). All privileged
+//                                    writes go through the
+//                                    apply_subscription_webhook_event
+//                                    SECURITY DEFINER RPC (030_subscription_
+//                                    webhook_rpc.sql), which bypasses RLS/
+//                                    grants regardless of the caller's role
+//                                    — this project's Secret key was found
+//                                    NOT to carry real elevated table
+//                                    privileges via supabase-js/PostgREST, so
+//                                    this function deliberately never needs it.
 //   SUBSCRIPTION_WEBHOOK_SECRET    — provider webhook signing secret
 //
 // Deploy:
@@ -32,13 +39,13 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-const SERVICE_ROLE_KEY = Deno.env.get('SB_SECRET_KEY')!
+const PUBLISHABLE_KEY = Deno.env.get('SB_PUBLISHABLE_KEY')!
 const WEBHOOK_SECRET = Deno.env.get('SUBSCRIPTION_WEBHOOK_SECRET') ?? ''
 
-// Service-role client: intentionally never imported by, or reachable from,
-// any browser code. RLS is bypassed here on purpose — this function IS the
-// trusted backend the RLS policies defer to.
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+// All privileged writes happen inside apply_subscription_webhook_event (a
+// SECURITY DEFINER RPC), so this client only ever needs a plain, low-
+// privilege key to reach PostgREST at all — see the comment above.
+const db = createClient(SUPABASE_URL, PUBLISHABLE_KEY)
 
 // --- PROVIDER-SPECIFIC: signature verification -----------------------------
 // Replace with the real HMAC check for whichever provider is configured
@@ -156,94 +163,32 @@ Deno.serve(async (req) => {
     return new Response('Missing user reference', { status: 400 })
   }
 
-  // Idempotency: a redelivered webhook with the same provider_event_id must
-  // never be processed twice. The unique index on subscription_events makes
-  // this atomic even under concurrent delivery.
-  if (evt.providerEventId) {
-    const { data: existing } = await admin
-      .from('subscription_events')
-      .select('id')
-      .eq('provider_event_id', evt.providerEventId)
-      .maybeSingle()
-    if (existing) {
-      return new Response(JSON.stringify({ ok: true, duplicate: true }), { status: 200 })
-    }
-  }
+  const nextStatus = STATUS_BY_EVENT[evt.type] ?? null
+  // A custom-plan checkout always activates the shared "custom" plan row
+  // (same features/limits as Pro) — the negotiated price itself lives on
+  // the customer's own custom_plan_requests row, never on subscription_plans.
+  const resolvedPlanSlug = evt.customPlanRequestId ? 'custom' : evt.planSlug
 
-  const nextStatus = STATUS_BY_EVENT[evt.type]
-
-  // Always log the raw event, whether or not we recognise its type.
-  const { data: subRow } = await admin
-    .from('user_subscriptions')
-    .select('id')
-    .eq('user_id', evt.userId)
-    .maybeSingle()
-
-  await admin.from('subscription_events').insert({
-    user_id: evt.userId,
-    subscription_id: subRow?.id ?? null,
-    event_type: evt.type,
-    provider_event_id: evt.providerEventId || null,
-    payload: raw,
+  const { data, error } = await db.rpc('apply_subscription_webhook_event', {
+    p_user_id: evt.userId,
+    p_event_type: evt.type,
+    p_provider_event_id: evt.providerEventId || null,
+    p_payload: raw,
+    p_next_status: nextStatus,
+    p_provider: evt.provider,
+    p_resolved_plan_slug: resolvedPlanSlug,
+    p_billing_cycle: evt.billingCycle,
+    p_customer_id: evt.customerId,
+    p_subscription_id: evt.subscriptionId,
+    p_period_start: evt.periodStart,
+    p_period_end: evt.periodEnd,
+    p_custom_plan_request_id: evt.customPlanRequestId,
   })
 
-  if (!nextStatus) {
-    // Recognised as "logged, no state change needed" — return 200 so the
-    // provider does not keep retrying an event we intentionally ignore.
-    return new Response(JSON.stringify({ ok: true, ignored: true }), { status: 200 })
-  }
-
-  const patch: Record<string, unknown> = {
-    status: nextStatus,
-    provider: evt.provider,
-    updated_at: new Date().toISOString(),
-  }
-  if (nextStatus === 'active') {
-    // A custom-plan checkout always activates the shared "custom" plan row
-    // (same features/limits as Pro) — the negotiated price itself lives on
-    // the customer's own custom_plan_requests row, never on subscription_plans.
-    const planSlug = evt.customPlanRequestId ? 'custom' : evt.planSlug
-    const { data: plan } = await admin
-      .from('subscription_plans')
-      .select('id')
-      .eq('slug', planSlug)
-      .maybeSingle()
-    patch.plan_id = plan?.id
-    patch.billing_cycle = evt.billingCycle
-    patch.cancel_at_period_end = false
-    patch.cancelled_at = null
-    if (evt.customerId) patch.provider_customer_id = evt.customerId
-    if (evt.subscriptionId) patch.provider_subscription_id = evt.subscriptionId
-    if (evt.periodStart) patch.current_period_start = evt.periodStart
-    if (evt.periodEnd) patch.current_period_end = evt.periodEnd
-  }
-  if (nextStatus === 'cancelled' || nextStatus === 'expired') {
-    patch.cancelled_at = new Date().toISOString()
-  }
-
-  const { error } = await admin.from('user_subscriptions').update(patch).eq('user_id', evt.userId)
   if (error) {
-    console.error('subscription-webhook: failed to update user_subscriptions', error)
+    console.error('subscription-webhook: apply_subscription_webhook_event failed', error)
     return new Response(JSON.stringify({ ok: false, error: error.message }), { status: 500 })
   }
 
-  // Custom Plan / Request-a-Quote linkage: flip the offer to active on first
-  // successful charge. The `.eq('status', 'payment_pending')` guard makes
-  // this a no-op on later renewal charges (already 'active') and on any
-  // redelivered/duplicate webhook — idempotent by construction, no separate
-  // check needed.
-  if (nextStatus === 'active' && evt.customPlanRequestId) {
-    await admin
-      .from('custom_plan_requests')
-      .update({
-        status: 'active',
-        provider: evt.provider,
-        provider_subscription_id: evt.subscriptionId ?? undefined,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', evt.customPlanRequestId)
-      .eq('status', 'payment_pending')
-  }
-
-  return new Response(JSON.stringify({ ok: true }), { status: 200 })
+  return new Response(JSON.stringify(data), { status: 200 })
 })
