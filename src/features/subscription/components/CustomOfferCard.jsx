@@ -17,7 +17,7 @@ const cycleLabel = (c) => (c === 'yearly' ? 'year' : 'month')
  * "did I request" flag to fall out of sync with the database.
  */
 export default function CustomOfferCard({ offer }) {
-  const { decline, acceptAndPay } = useCustomPlanMutations()
+  const { decline, acceptAndPay, resumePayment } = useCustomPlanMutations()
   const toast = useToast()
   const [requestOpen, setRequestOpen] = useState(false)
   const [confirmDecline, setConfirmDecline] = useState(false)
@@ -28,6 +28,13 @@ export default function CustomOfferCard({ offer }) {
   const onAccept = async () => {
     try {
       await acceptAndPay.mutateAsync(offer.id)
+    } catch (e) {
+      toast.error(friendlyError(e, 'Unable to start checkout right now.'))
+    }
+  }
+  const onResumePayment = async () => {
+    try {
+      await resumePayment.mutateAsync(offer.id)
     } catch (e) {
       toast.error(friendlyError(e, 'Unable to start checkout right now.'))
     }
@@ -92,8 +99,8 @@ export default function CustomOfferCard({ offer }) {
       <div className="card p-6 text-center">
         <h3 className="text-base font-bold">Payment in progress</h3>
         <p className="mt-1 text-sm text-ink-soft">Finish your payment to activate your custom plan.</p>
-        <button className="btn-primary mt-4" onClick={onAccept} disabled={acceptAndPay.isPending}>
-          {acceptAndPay.isPending ? 'Opening checkout…' : 'Continue to payment'}
+        <button className="btn-primary mt-4" onClick={onResumePayment} disabled={resumePayment.isPending}>
+          {resumePayment.isPending ? 'Opening checkout…' : 'Continue to payment'}
         </button>
       </div>
     )

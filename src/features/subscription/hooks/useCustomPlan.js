@@ -40,5 +40,20 @@ export function useCustomPlanMutations() {
     onSuccess: invalidate,
   })
 
-  return { request, decline, acceptAndPay }
+  // For an offer that's already payment_pending (the user dismissed the
+  // checkout modal once and is retrying) — skips accept_custom_plan_offer,
+  // which only succeeds while the row is still 'offered' and would reject a
+  // second call with "This offer is no longer available".
+  const resumePayment = useMutation({
+    mutationFn: async (offerId) => {
+      const checkout = await createCustomPlanCheckout(offerId)
+      await openRazorpayCheckout(
+        { keyId: checkout.key_id, subscriptionId: checkout.subscription_id },
+        { onDismiss: invalidate },
+      )
+    },
+    onSuccess: invalidate,
+  })
+
+  return { request, decline, acceptAndPay, resumePayment }
 }
