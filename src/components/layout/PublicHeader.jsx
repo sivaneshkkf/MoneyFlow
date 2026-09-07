@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
-import Logo from '../common/Logo'
+import MoneyFlowLogo from '../branding/MoneyFlowLogo'
 import { useAuth } from '../../features/auth/AuthProvider'
 
 const NAV_LINKS = [
@@ -16,9 +16,7 @@ export default function PublicHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-bg/80 backdrop-blur dark:border-white/10 dark:bg-[#0F1614]/80">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="shrink-0">
-          <Logo withText />
-        </Link>
+        <MoneyFlowLogo size="h-8" to="/" />
 
         <nav className="hidden items-center gap-1 md:flex">
           {NAV_LINKS.map((l) => (

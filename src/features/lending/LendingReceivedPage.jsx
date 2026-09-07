@@ -24,6 +24,7 @@ import {
   Skeleton,
   ErrorState,
   InfoDot,
+  StatCard,
 } from "../../components/common";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
 import {
@@ -37,73 +38,6 @@ import { useToast } from "../../components/common/ToastProvider";
 import { friendlyError } from "../../utils/errors";
 
 const PAGE_SIZE = 10;
-
-function Bars({ color }) {
-  return (
-    <svg
-      width="52"
-      height="34"
-      viewBox="0 0 52 34"
-      aria-hidden="true"
-      className="shrink-0"
-    >
-      {[8, 14, 20, 26, 32].map((h, i) => (
-        <rect
-          key={i}
-          x={i * 10}
-          y={34 - h}
-          width="7"
-          height={h}
-          rx="2"
-          fill={color}
-          fillOpacity={0.25 + i * 0.12}
-        />
-      ))}
-    </svg>
-  );
-}
-
-function StatTile({ icon: Icon, tint, label, value, foot, info, valueColor }) {
-  return (
-    <div className={`rounded-2xl border p-4 ${tint.card} backdrop-blur-[3px]`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-1 text-sm text-ink-soft">
-            {label}
-            {info && <InfoDot text={info} />}
-          </p>
-          <p
-            className={`mt-1 text-2xl font-bold tracking-tight ${valueColor ?? ""}`}
-          >
-            {value}
-          </p>
-          <p className="mt-0.5 text-xs text-ink-soft">{foot}</p>
-        </div>
-        <span
-          className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${tint.icon}`}
-        >
-          <Icon className="h-4 w-4" />
-        </span>
-      </div>
-      <div className="mt-2 flex justify-end">
-        <Bars color={tint.bar} />
-      </div>
-    </div>
-  );
-}
-
-const TINTS = {
-  green: {
-    card: "border-success/20 bg-success/[0.06]",
-    icon: "bg-success/15 text-success",
-    bar: "#22C55E",
-  },
-  indigo: {
-    card: "border-[#8B5CF6]/20 bg-[#8B5CF6]/[0.06]",
-    icon: "bg-[#8B5CF6]/15 text-[#8B5CF6]",
-    bar: "#8B5CF6",
-  },
-};
 
 function RowMenu({ onView, onDelete }) {
   const [open, setOpen] = useState(false);
@@ -289,37 +223,28 @@ export default function LendingReceivedPage() {
         <ErrorState message="Unable to load repayments." onRetry={refetch} />
       ) : (
         <>
-          <img
-            src="/walletImg.png"
-            alt=""
-            aria-hidden="true"
-            className="absolute right-32 top-10 -z-10 pointer-events-none hidden w-60 select-none object-contain xl:block"
-          />
-          <div className="grid gap-4 sm:grid-cols-3 z-10">
-            <StatTile
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatCard
               icon={Coins}
-              tint={TINTS.green}
-              label="Principal received"
-              value={formatCurrency(totals.principal)}
-              valueColor="text-success"
-              foot={`From ${count} repayment${count === 1 ? "" : "s"}`}
+              tone="success"
+              title="Principal received"
+              amount={formatCurrency(totals.principal)}
+              hint={`From ${count} repayment${count === 1 ? "" : "s"}`}
               info="Repaid principal returns your cash — it is not income."
             />
-            <StatTile
+            <StatCard
               icon={Percent}
-              tint={TINTS.indigo}
-              label="Interest received"
-              value={formatCurrency(totals.interest)}
-              foot={`From ${count} repayment${count === 1 ? "" : "s"}`}
+              title="Interest received"
+              amount={formatCurrency(totals.interest)}
+              hint={`From ${count} repayment${count === 1 ? "" : "s"}`}
               info="Only the interest portion of a repayment counts as income."
             />
-            <StatTile
+            <StatCard
               icon={Wallet}
-              tint={TINTS.green}
-              label="Total received"
-              value={formatCurrency(totals.total)}
-              valueColor="text-success"
-              foot="Principal + Interest"
+              tone="success"
+              title="Total received"
+              amount={formatCurrency(totals.total)}
+              hint="Principal + Interest"
             />
           </div>
 

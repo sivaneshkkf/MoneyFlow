@@ -1,6 +1,5 @@
-import { Link } from 'react-router-dom'
 import { LineChart, Target, ShieldCheck, Moon, Sun, Laptop } from 'lucide-react'
-import Logo from '../../components/common/Logo'
+import MoneyFlowLogo from '../../components/branding/MoneyFlowLogo'
 import { useTheme } from '../settings/ThemeProvider'
 
 const HERO_IMG = '/loginPageImg.png'
@@ -60,13 +59,9 @@ export default function AuthShell({ title, subtitle, children, footer }) {
           style={{ background: 'radial-gradient(circle, rgba(74,222,128,0.16), transparent 70%)' }}
         />
         <div className="relative">
-          <Link to="/" className="flex items-center gap-3">
-            <Logo className="h-11 w-11" />
-            <span>
-              <span className="block text-lg font-extrabold leading-none">MoneyFlow</span>
-              <span className="block text-xs text-white/55">Your money, your flow.</span>
-            </span>
-          </Link>
+          {/* tone="light" forces the "Money" half to white — this panel is
+              always dark regardless of the light/dark theme toggle. */}
+          <MoneyFlowLogo to="/" size="h-11" textSize="text-lg" tone="light" />
 
           <h2 className="mt-12 max-w-md text-4xl font-extrabold leading-[1.1] xl:text-[2.7rem]">
             Take control of your{' '}
@@ -108,7 +103,7 @@ export default function AuthShell({ title, subtitle, children, footer }) {
         </div>
         <div className="w-full max-w-[26rem]">
           <div className="mb-8 lg:hidden">
-            <Logo withText />
+            <MoneyFlowLogo size="h-9" textSize="text-xl" />
           </div>
           {(title || subtitle) && (
             <div className="text-center">

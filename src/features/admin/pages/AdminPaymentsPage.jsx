@@ -39,7 +39,13 @@ export default function AdminPaymentsPage() {
         </p>
       </div>
 
-      <AdminFilters filters={[{ key: 'event', value: eventType, onChange: (v) => { setEventType(v); setPage(0) }, options: EVENT_OPTIONS }]} />
+      <AdminFilters
+        filters={[{ key: 'event', value: eventType, onChange: (v) => { setEventType(v); setPage(0) }, options: EVENT_OPTIONS }]}
+        onClear={() => {
+          setEventType('')
+          setPage(0)
+        }}
+      />
 
       <AdminDataTable
         columns={columns}

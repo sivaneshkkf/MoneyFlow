@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
-import { Moon, Sun, Laptop, Search, ShieldCheck } from 'lucide-react'
-import Logo from '../common/Logo'
+import { Moon, Sun, Laptop, Search, ShieldCheck, Menu } from 'lucide-react'
+import MoneyFlowLogo from '../branding/MoneyFlowLogo'
 import { useTheme } from '../../features/settings/ThemeProvider'
 import NotificationBell from '../../features/notifications/NotificationBell'
 import PlanBadge from '../../features/subscription/components/PlanBadge'
 import { useAdminAccess } from '../../features/admin/hooks/useAdmin'
+import HelpMenu from './HelpMenu'
 
-export default function Header() {
+export default function Header({ onMenuClick }) {
   const { theme, setTheme } = useTheme()
   const { isAdmin } = useAdminAccess()
   const next = { light: 'dark', dark: 'system', system: 'light' }
@@ -16,8 +17,16 @@ export default function Header() {
 
   return (
     <header className="no-print sticky top-0 z-30 flex h-16 items-center justify-between border-b border-line bg-bg/80 px-4 backdrop-blur dark:border-white/10 dark:bg-[#0F1614]/80 sm:px-6 lg:px-8">
-      <div className="flex items-center gap-2 lg:hidden">
-        <Logo withText />
+      <div className="flex items-center gap-1 lg:hidden">
+        <button className="btn-ghost !p-2" onClick={onMenuClick} aria-label="Open menu">
+          <Menu className="h-5 w-5" />
+        </button>
+        {/* Icon-only below sm (the row is already crowded with search/help/
+            bell/theme controls); full wordmark once there's room at sm+. */}
+        <MoneyFlowLogo variant="icon" size="h-8 sm:hidden" to="/dashboard" />
+        <span className="hidden sm:inline-flex">
+          <MoneyFlowLogo size="h-8" to="/dashboard" />
+        </span>
       </div>
       <button
         onClick={openPalette}
@@ -31,6 +40,7 @@ export default function Header() {
         <button className="btn-ghost !p-2 lg:hidden" onClick={openPalette} aria-label="Search">
           <Search className="h-4 w-4" />
         </button>
+        <HelpMenu />
         <PlanBadge className="hidden sm:inline-flex" />
         {isAdmin && (
           <Link

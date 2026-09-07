@@ -1,6 +1,6 @@
 /* MoneyFlow service worker — app-shell caching only. No financial data is cached. */
-const CACHE = 'moneyflow-shell-v1'
-const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg']
+const CACHE = 'moneyflow-shell-v2'
+const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/logo.png']
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()))

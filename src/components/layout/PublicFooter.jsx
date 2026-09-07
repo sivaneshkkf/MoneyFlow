@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import Logo from '../common/Logo'
+import MoneyFlowLogo from '../branding/MoneyFlowLogo'
 import { BUSINESS_INFO, isConfigured } from '../../config/businessConfig'
 
 const COLUMNS = [
@@ -35,7 +35,7 @@ export default function PublicFooter() {
       <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div>
-            <Logo withText />
+            <MoneyFlowLogo size="h-8" />
             <p className="mt-3 max-w-xs text-sm text-ink-soft">
               Take control of your money with simple, clear financial tracking.
             </p>

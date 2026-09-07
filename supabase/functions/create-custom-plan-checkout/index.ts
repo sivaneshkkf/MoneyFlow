@@ -12,18 +12,18 @@
 // billing cycle passed in the request body. The only input is the row id.
 //
 // Deploy:  supabase functions deploy create-custom-plan-checkout
-// Secrets required: RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, SB_SECRET_KEY,
-// SB_PUBLISHABLE_KEY
-// (SUPABASE_URL is provided automatically by the platform. The other two
-//  must be set manually — this project uses Supabase's newer Publishable/
-//  Secret key system, not legacy anon/service_role JWTs, and custom secrets
-//  can't be named with a SUPABASE_ prefix, so they're named SB_* here. Get
-//  both values from Project Settings > API Keys.)
+// Secrets required: RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, SB_PUBLISHABLE_KEY
+// (SUPABASE_URL is provided automatically by the platform. SB_PUBLISHABLE_KEY
+//  must be set manually from Project Settings > API Keys — named SB_* since
+//  custom secrets can't use a SUPABASE_ prefix. No elevated/Secret key is
+//  needed here: the row read relies on the caller's own session (own_select
+//  RLS policy), and the one privileged write goes through the
+//  set_custom_plan_provider_subscription SECURITY DEFINER RPC — see
+//  031_custom_plan_checkout_rpc.sql for why.)
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-const SERVICE_ROLE_KEY = Deno.env.get('SB_SECRET_KEY')!
 const ANON_KEY = Deno.env.get('SB_PUBLISHABLE_KEY')!
 const RAZORPAY_KEY_ID = Deno.env.get('RAZORPAY_KEY_ID') ?? ''
 const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET') ?? ''
@@ -89,12 +89,11 @@ Deno.serve(async (req) => {
   }
   const userId = callerData.user.id
 
-  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
-
-  // Re-derive everything from the database. The row must belong to this
-  // user and must already be payment_pending (set by accept_custom_plan_offer,
-  // which itself re-checked status/expiry) — never trust the browser.
-  const { data: reqRow, error: reqErr } = await admin
+  // Re-derive everything from the database, using the caller's own session
+  // (own_select RLS already scopes this to rows the caller owns). The row
+  // must already be payment_pending (set by accept_custom_plan_offer, which
+  // itself re-checked status/expiry) — never trust the browser.
+  const { data: reqRow, error: reqErr } = await callerClient
     .from('custom_plan_requests')
     .select('id, user_id, admin_price, billing_cycle, offer_source, status')
     .eq('id', requestId)
@@ -137,10 +136,12 @@ Deno.serve(async (req) => {
       },
     })
 
-    await admin
-      .from('custom_plan_requests')
-      .update({ provider: 'razorpay', provider_subscription_id: subscription.id, updated_at: new Date().toISOString() })
-      .eq('id', reqRow.id)
+    const { error: cacheErr } = await callerClient.rpc('set_custom_plan_provider_subscription', {
+      p_id: reqRow.id,
+      p_provider: 'razorpay',
+      p_provider_subscription_id: subscription.id,
+    })
+    if (cacheErr) console.error('create-custom-plan-checkout: failed to persist provider_subscription_id', cacheErr)
 
     return json({ key_id: RAZORPAY_KEY_ID, subscription_id: subscription.id })
   } catch (e) {

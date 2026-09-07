@@ -43,7 +43,7 @@ src/
   constants/    index.js
   routes/       AppRoutes.jsx
 supabase/migrations/   001 … 014 (see below)
-public/       sw.js, manifest.webmanifest, favicon.svg
+public/       sw.js, manifest.webmanifest, logo.png, logoHorizontal.png, logoVertical.png
 ```
 
 ## 2. Installed packages

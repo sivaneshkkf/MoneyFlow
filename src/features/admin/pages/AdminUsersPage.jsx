@@ -105,6 +105,12 @@ export default function AdminUsersPage() {
           { key: 'plan', value: planSlug, onChange: (v) => { setPlanSlug(v); setPage(0) }, options: PLAN_OPTIONS },
           { key: 'status', value: status, onChange: (v) => { setStatus(v); setPage(0) }, options: STATUS_OPTIONS },
         ]}
+        onClear={() => {
+          setSearch('')
+          setPlanSlug('')
+          setStatus('')
+          setPage(0)
+        }}
       />
 
       <AdminDataTable

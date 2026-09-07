@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { useAdminAccess } from './hooks/useAdmin'
-import Logo from '../../components/common/Logo'
+import MoneyFlowLogo from '../../components/branding/MoneyFlowLogo'
 import AdminAccessDeniedPage from './pages/AdminAccessDeniedPage'
 
 /**
@@ -25,7 +25,7 @@ export default function AdminRoute({ children }) {
   if (isLoading || !resolved) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3">
-        <Logo className="h-10 w-10 animate-pulse" />
+        <MoneyFlowLogo variant="icon" size="h-10 animate-pulse" />
         <p className="text-sm text-ink-soft">Verifying admin access…</p>
       </div>
     )

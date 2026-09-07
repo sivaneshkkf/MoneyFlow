@@ -121,6 +121,11 @@ export default function AdminCustomPlansPage() {
         onSearchChange={(v) => { setSearch(v); setPage(0) }}
         searchPlaceholder="Search by name or email…"
         filters={[{ key: 'status', value: status, onChange: (v) => { setStatus(v); setPage(0) }, options: STATUS_OPTIONS }]}
+        onClear={() => {
+          setSearch('')
+          setStatus('')
+          setPage(0)
+        }}
       />
 
       <AdminDataTable

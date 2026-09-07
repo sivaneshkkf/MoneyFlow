@@ -104,6 +104,11 @@ export default function AdminSubscriptionsPage() {
           { key: 'status', value: status, onChange: (v) => { setStatus(v); setPage(0) }, options: STATUS_OPTIONS },
           { key: 'plan', value: planSlug, onChange: (v) => { setPlanSlug(v); setPage(0) }, options: PLAN_OPTIONS },
         ]}
+        onClear={() => {
+          setStatus('')
+          setPlanSlug('')
+          setPage(0)
+        }}
       />
 
       <AdminDataTable

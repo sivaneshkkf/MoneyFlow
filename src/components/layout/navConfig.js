@@ -12,6 +12,7 @@ import {
   Settings,
   Home,
   CalendarClock,
+  Menu,
 } from 'lucide-react'
 
 export const navSections = [
@@ -56,10 +57,14 @@ export const navSections = [
   },
 ]
 
+// The last entry is special-cased by MobileNavigation to open the full nav
+// drawer instead of navigating — everything not listed here (Income,
+// Expenses, Budgets, Bills, Goals, Money Received, Reports, Settings…)
+// lives in that drawer.
 export const mobileNav = [
   { to: '/dashboard', label: 'Home', icon: Home },
   { to: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
   { to: '/lending/given', label: 'Lending', icon: HandCoins },
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/settings', label: 'More', icon: Settings },
+  { to: '/settings', label: 'More', icon: Menu },
 ]

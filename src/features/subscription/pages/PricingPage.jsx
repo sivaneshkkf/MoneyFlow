@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Check, Minus, ShieldCheck, Sparkles } from 'lucide-react'
 import clsx from 'clsx'
 import { PageContainer, Skeleton, ErrorState } from '../../../components/common'
@@ -66,6 +66,7 @@ function ComparisonCell({ plan, row }) {
 export default function PricingPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const { data: plans, isLoading, isError, refetch } = usePlans()
   const { plan: currentPlan, isPro } = useSubscription()
   const { data: customOffer } = useMyCustomPlanOffer()
@@ -75,6 +76,16 @@ export default function PricingPage() {
 
   const free = plans?.find((p) => p.slug === 'free')
   const pro = plans?.find((p) => p.slug === 'pro')
+
+  // React Router doesn't auto-scroll to a #hash on client-side navigation
+  // (only the browser does that on a full page load) — do it ourselves once
+  // the section it points to has actually rendered.
+  useEffect(() => {
+    if (!location.hash || isLoading) return
+    const id = location.hash.slice(1)
+    const el = document.getElementById(id)
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [location.hash, isLoading])
 
   const savingsPct = useMemo(() => {
     if (!pro || Number(pro.price_monthly) <= 0) return 0
@@ -199,7 +210,7 @@ export default function PricingPage() {
         </div>
       </div>
 
-      <div className="mx-auto mt-14 max-w-2xl">
+      <div id="faq" className="mx-auto mt-14 max-w-2xl scroll-mt-24">
         <h2 className="mb-4 text-center text-lg font-bold">Frequently asked questions</h2>
         <div className="card divide-y divide-line p-0 dark:divide-white/5">
           {FAQ.map((f) => (

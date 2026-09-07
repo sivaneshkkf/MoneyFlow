@@ -287,7 +287,7 @@ export default function SubscriptionPage() {
               </Link>
               <p className="relative mt-3 text-center text-xs text-ink-soft">Plan for a brighter tomorrow.</p>
             </div>
-          ) : (
+          ) : isPro ? (
             <div className="card p-6 text-center">
               <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-dark to-brand-700 text-white">
                 <Sparkles className="h-5 w-5" />
@@ -295,7 +295,7 @@ export default function SubscriptionPage() {
               <h2 className="mt-3 text-base font-bold">You&apos;re on Pro ✦</h2>
               <p className="mt-1 text-sm text-ink-soft">Every advanced feature and unlimited usage is unlocked.</p>
             </div>
-          )}
+          ) : null /* Custom plan: CustomOfferCard above already shows the active-plan state */}
 
           <div className="card p-6">
             <div className="mb-4 flex items-center justify-between gap-2">

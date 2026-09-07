@@ -1,7 +1,21 @@
 import { NavLink, Link } from 'react-router-dom'
 import clsx from 'clsx'
-import { ShieldCheck, ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import MoneyFlowLogo from '../../../components/branding/MoneyFlowLogo'
 import { ADMIN_NAV } from '../adminMeta'
+
+// Same MoneyFlow logo as everywhere else, plus a small "Admin" badge —
+// deliberately not a separate admin logo/mark.
+function AdminBrand() {
+  return (
+    <div className="flex h-16 items-center gap-2 px-5">
+      <MoneyFlowLogo size="h-7" textSize="text-base" to="/admin/dashboard" />
+      <span className="rounded-md bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-700 dark:bg-white/10 dark:text-brand-400">
+        Admin
+      </span>
+    </div>
+  )
+}
 
 function NavList({ onNavigate }) {
   return (
@@ -39,15 +53,7 @@ function NavList({ onNavigate }) {
 export default function AdminSidebar() {
   return (
     <aside className="no-print hidden h-full w-64 shrink-0 flex-col border-r border-line bg-white dark:border-white/10 dark:bg-[#131B19] lg:flex">
-      <div className="flex h-16 items-center gap-2.5 px-5">
-        <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-dark to-brand-700 text-white">
-          <ShieldCheck className="h-4 w-4" />
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold leading-tight">MoneyFlow</p>
-          <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Admin</p>
-        </div>
-      </div>
+      <AdminBrand />
       <NavList />
       <div className="border-t border-line p-3 dark:border-white/10">
         <Link
@@ -67,15 +73,7 @@ export function AdminSidebarDrawer({ open, onClose }) {
     <div className="fixed inset-0 z-50 lg:hidden">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
       <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-white shadow-xl dark:bg-[#131B19]">
-        <div className="flex h-16 items-center gap-2.5 px-5">
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-dark to-brand-700 text-white">
-            <ShieldCheck className="h-4 w-4" />
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold leading-tight">MoneyFlow</p>
-            <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Admin</p>
-          </div>
-        </div>
+        <AdminBrand />
         <NavList onNavigate={onClose} />
         <div className="border-t border-line p-3 dark:border-white/10">
           <Link

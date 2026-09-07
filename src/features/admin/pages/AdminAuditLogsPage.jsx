@@ -52,7 +52,13 @@ export default function AdminAuditLogsPage() {
         <p className="mt-1 text-sm text-ink-soft">Every sensitive admin action, who did it, and why.</p>
       </div>
 
-      <AdminFilters filters={[{ key: 'action', value: action, onChange: (v) => { setAction(v); setPage(0) }, options: ACTION_OPTIONS }]} />
+      <AdminFilters
+        filters={[{ key: 'action', value: action, onChange: (v) => { setAction(v); setPage(0) }, options: ACTION_OPTIONS }]}
+        onClear={() => {
+          setAction('')
+          setPage(0)
+        }}
+      />
 
       <AdminDataTable
         columns={columns}

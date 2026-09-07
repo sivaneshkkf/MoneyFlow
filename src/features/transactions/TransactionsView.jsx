@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   SlidersHorizontal,
+  RotateCcw,
 } from 'lucide-react'
 import { PageContainer, Badge, EmptyState, Skeleton, ErrorState } from '../../components/common'
 import Modal from '../../components/common/Modal'
@@ -144,37 +145,47 @@ export default function TransactionsView({ lockedType = null, title, subtitle, t
           </button>
         </div>
         {showFilters && (
-          <div className="mt-3 grid grid-cols-1 gap-3 border-t border-line pt-3 dark:border-white/10 sm:grid-cols-4">
-            <Field label="Category">
-              <Select value={filters.categoryId} onChange={(e) => setFilter({ categoryId: e.target.value })}>
-                <option value="">All</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Account">
-              <Select
-                value={filters.accountId}
-                onChange={(e) => setFilter({ accountId: e.target.value })}
-                renderOption={renderAccountOption(accounts)}
+          <div className="mt-3 border-t border-line pt-3 dark:border-white/10">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+              <Field label="Category">
+                <Select value={filters.categoryId} onChange={(e) => setFilter({ categoryId: e.target.value })}>
+                  <option value="">All</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Account">
+                <Select
+                  value={filters.accountId}
+                  onChange={(e) => setFilter({ accountId: e.target.value })}
+                  renderOption={renderAccountOption(accounts)}
+                >
+                  <option value="">All</option>
+                  {accounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {accountOptionLabel(a)}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="From">
+                <TextInput type="date" value={filters.from} onChange={(e) => setFilter({ from: e.target.value })} />
+              </Field>
+              <Field label="To">
+                <TextInput type="date" value={filters.to} onChange={(e) => setFilter({ to: e.target.value })} />
+              </Field>
+            </div>
+            {(filters.categoryId || filters.accountId || filters.from || filters.to) && (
+              <button
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-ink-soft transition hover:text-ink"
+                onClick={() => setFilter({ categoryId: '', accountId: '', from: '', to: '' })}
               >
-                <option value="">All</option>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {accountOptionLabel(a)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="From">
-              <TextInput type="date" value={filters.from} onChange={(e) => setFilter({ from: e.target.value })} />
-            </Field>
-            <Field label="To">
-              <TextInput type="date" value={filters.to} onChange={(e) => setFilter({ to: e.target.value })} />
-            </Field>
+                <RotateCcw className="h-3.5 w-3.5" /> Clear filters
+              </button>
+            )}
           </div>
         )}
       </div>
