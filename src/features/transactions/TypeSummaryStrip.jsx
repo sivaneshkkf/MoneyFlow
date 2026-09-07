@@ -105,7 +105,7 @@ export default function TypeSummaryStrip({ type }) {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile icon={Calendar} iconTint="bg-success/15 text-success" label={`This month's ${label.toLowerCase()}`}>
           <div className="mt-2 flex items-end justify-between gap-2">
-            <div>
+            <div className="min-w-0">
               <p className="text-2xl font-bold tracking-tight">{formatCurrency(data.thisMonth)}</p>
               <div className="mt-1">
                 <Delta pct={data.change} suffix="vs last month" />
@@ -156,7 +156,7 @@ export default function TypeSummaryStrip({ type }) {
       {/* --- charts --- */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="card p-5 lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-semibold">{label} trend (12 months)</p>
             <Select value="monthly" onChange={() => {}} className="w-28">
               <option value="monthly">Monthly</option>
@@ -189,7 +189,7 @@ export default function TypeSummaryStrip({ type }) {
         </div>
 
         <div className="card p-5">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-semibold">By {type === 'income' ? 'source' : 'category'}</p>
             <Select value={donutPeriod} onChange={(e) => setDonutPeriod(e.target.value)} className="w-32">
               <option value="month">This month</option>

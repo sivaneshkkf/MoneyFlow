@@ -54,10 +54,10 @@ export default function AccountList({ accounts, menuProps }) {
       <div className="space-y-2 md:hidden">
         {accounts.map((a) => (
           <div key={a.id} className="card p-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-medium">{a.name}</p>
-                <p className="text-xs text-ink-soft">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium">{a.name}</p>
+                <p className="truncate text-xs text-ink-soft">
                   {a.type}
                   {a.institution ? ` · ${a.institution}` : ''}
                   {maskedNumber(a) ? ` · ${maskedNumber(a)}` : ''}

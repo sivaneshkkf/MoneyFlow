@@ -324,22 +324,22 @@ export default function TransactionsView({ lockedType = null, title, subtitle, t
           <div className="space-y-2 md:hidden">
             {rows.map((t) => (
               <div key={t.id} className="card p-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-medium">{t.description || 'Untitled'}</p>
-                    <p className="text-xs text-ink-soft">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{t.description || 'Untitled'}</p>
+                    <p className="truncate text-xs text-ink-soft">
                       {t.category?.name || '—'} · {formatFriendlyDate(t.transaction_date)}
                     </p>
                   </div>
-                  <span className={`font-semibold ${t.type === 'income' ? 'text-success' : 'text-danger'}`}>
+                  <span className={`shrink-0 font-semibold ${t.type === 'income' ? 'text-success' : 'text-danger'}`}>
                     {t.type === 'income' ? '+' : '-'}
                     {formatCurrency(t.amount)}
                   </span>
                 </div>
                 {t.source === 'manual' && (
-                  <div className="mt-2 flex gap-2 border-t border-line pt-2 dark:border-white/10">
+                  <div className="-mb-1 mt-2 flex gap-1 border-t border-line pt-1 dark:border-white/10">
                     <button
-                      className="text-xs font-medium text-brand-700"
+                      className="rounded-lg px-2.5 py-2 text-xs font-medium text-brand-700 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-white/5"
                       onClick={() => {
                         setEditing(t)
                         setFormOpen(true)
@@ -347,7 +347,10 @@ export default function TransactionsView({ lockedType = null, title, subtitle, t
                     >
                       Edit
                     </button>
-                    <button className="text-xs font-medium text-danger" onClick={() => setDeleting(t)}>
+                    <button
+                      className="rounded-lg px-2.5 py-2 text-xs font-medium text-danger transition hover:bg-danger/10"
+                      onClick={() => setDeleting(t)}
+                    >
                       Delete
                     </button>
                   </div>

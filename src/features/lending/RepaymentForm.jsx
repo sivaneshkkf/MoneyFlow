@@ -119,7 +119,7 @@ export default function RepaymentForm({ record, onDone, prefill }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Principal (₹)" error={errors.principal?.message}>
           <MoneyInput {...register('principal')} autoFocus />
         </Field>
@@ -143,7 +143,7 @@ export default function RepaymentForm({ record, onDone, prefill }) {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Date" error={errors.payment_date?.message}>
           <TextInput type="date" {...register('payment_date')} />
         </Field>

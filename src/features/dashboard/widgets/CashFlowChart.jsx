@@ -43,13 +43,16 @@ export default function CashFlowChart() {
       <SectionHeader
         title="Cash Flow"
         action={
-          <div className="flex gap-1">
+          // Five text-labeled options ("7 days" … "12 months") don't fit
+          // next to the title on a narrow screen — scroll horizontally
+          // instead of wrapping into a second row or overflowing the card.
+          <div className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {RANGE_OPTIONS.map((r) => (
               <button
                 key={r.key}
                 onClick={() => setRange(r.key)}
                 className={clsx(
-                  'rounded-lg px-2 py-1 text-xs font-medium transition',
+                  'shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition',
                   range === r.key ? 'bg-dark text-white dark:bg-brand-700' : 'text-ink-soft hover:bg-brand-50 dark:hover:bg-white/5',
                 )}
               >

@@ -307,112 +307,164 @@ export default function LendingReceivedPage() {
               />
             </div>
           ) : (
-            <div className="mt-4 card overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="border-b border-line bg-brand-50/40 text-left text-[11px] font-semibold uppercase tracking-wider text-ink-soft dark:border-white/10 dark:bg-white/[0.03]">
-                    <tr>
-                      <th className="px-5 py-3.5 text-ink-soft">#</th>
-                      <SortTh
-                        label="Date"
-                        field="date"
-                        sort={sort}
-                        setSort={setSort}
-                      />
-                      <SortTh
-                        label="Borrower"
-                        field="borrower"
-                        sort={sort}
-                        setSort={setSort}
-                      />
-                      <SortTh
-                        label="Principal"
-                        field="principal"
-                        sort={sort}
-                        setSort={setSort}
-                        align="right"
-                      />
-                      <SortTh
-                        label="Interest"
-                        field="interest"
-                        sort={sort}
-                        setSort={setSort}
-                        align="right"
-                      />
-                      <SortTh
-                        label="Total"
-                        field="total"
-                        sort={sort}
-                        setSort={setSort}
-                        align="right"
-                      />
-                      <SortTh
-                        label="Account"
-                        field="account"
-                        sort={sort}
-                        setSort={setSort}
-                      />
-                      <th className="px-5 py-3.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pageRows.map((r, i) => {
-                      const name = r.record?.borrower_name ?? "—";
-                      return (
-                        <tr
-                          key={r.id}
-                          className="border-b border-line last:border-0 hover:bg-brand-50/40 dark:border-white/5"
-                        >
-                          <td className="px-5 py-3.5 text-ink-soft">
-                            {(page - 1) * PAGE_SIZE + i + 1}
-                          </td>
-                          <td className="px-5 py-3.5">
-                            <p className="font-semibold">
-                              {formatDate(r.payment_date, "dd MMM yyyy")}
-                            </p>
-                            <p className="text-xs text-ink-soft">
-                              {formatDate(r.payment_date, "EEE")}
-                            </p>
-                          </td>
-                          <td className="px-5 py-3.5">
-                            <span className="inline-flex items-center gap-2.5">
-                              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-success/12 text-xs font-bold text-success">
-                                {name.charAt(0).toUpperCase()}
+            <>
+              {/* Desktop table */}
+              <div className="mt-4 hidden card overflow-hidden md:block">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-line bg-brand-50/40 text-left text-[11px] font-semibold uppercase tracking-wider text-ink-soft dark:border-white/10 dark:bg-white/[0.03]">
+                      <tr>
+                        <th className="px-5 py-3.5 text-ink-soft">#</th>
+                        <SortTh
+                          label="Date"
+                          field="date"
+                          sort={sort}
+                          setSort={setSort}
+                        />
+                        <SortTh
+                          label="Borrower"
+                          field="borrower"
+                          sort={sort}
+                          setSort={setSort}
+                        />
+                        <SortTh
+                          label="Principal"
+                          field="principal"
+                          sort={sort}
+                          setSort={setSort}
+                          align="right"
+                        />
+                        <SortTh
+                          label="Interest"
+                          field="interest"
+                          sort={sort}
+                          setSort={setSort}
+                          align="right"
+                        />
+                        <SortTh
+                          label="Total"
+                          field="total"
+                          sort={sort}
+                          setSort={setSort}
+                          align="right"
+                        />
+                        <SortTh
+                          label="Account"
+                          field="account"
+                          sort={sort}
+                          setSort={setSort}
+                        />
+                        <th className="px-5 py-3.5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pageRows.map((r, i) => {
+                        const name = r.record?.borrower_name ?? "—";
+                        return (
+                          <tr
+                            key={r.id}
+                            className="border-b border-line last:border-0 hover:bg-brand-50/40 dark:border-white/5"
+                          >
+                            <td className="px-5 py-3.5 text-ink-soft">
+                              {(page - 1) * PAGE_SIZE + i + 1}
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <p className="font-semibold">
+                                {formatDate(r.payment_date, "dd MMM yyyy")}
+                              </p>
+                              <p className="text-xs text-ink-soft">
+                                {formatDate(r.payment_date, "EEE")}
+                              </p>
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <span className="inline-flex items-center gap-2.5">
+                                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-success/12 text-xs font-bold text-success">
+                                  {name.charAt(0).toUpperCase()}
+                                </span>
+                                <span className="font-medium">{name}</span>
                               </span>
-                              <span className="font-medium">{name}</span>
-                            </span>
-                          </td>
-                          <td className="px-5 py-3.5 text-right">
-                            {formatCurrency(r.principal_amount)}
-                          </td>
-                          <td className="px-5 py-3.5 text-right text-success">
-                            {formatCurrency(r.interest_amount)}
-                          </td>
-                          <td className="px-5 py-3.5 text-right font-bold">
-                            {formatCurrency(r.amount)}
-                          </td>
-                          <td className="px-5 py-3.5 text-ink-soft">
-                            {r.account?.name ?? "—"}
-                          </td>
-                          <td className="px-5 py-3.5">
-                            <div className="flex justify-end">
-                              <RowMenu
-                                onView={() =>
-                                  r.lending_record_id &&
-                                  navigate(`/lending/${r.lending_record_id}`)
-                                }
-                                onDelete={() => setDeleting(r)}
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                            </td>
+                            <td className="px-5 py-3.5 text-right">
+                              {formatCurrency(r.principal_amount)}
+                            </td>
+                            <td className="px-5 py-3.5 text-right text-success">
+                              {formatCurrency(r.interest_amount)}
+                            </td>
+                            <td className="px-5 py-3.5 text-right font-bold">
+                              {formatCurrency(r.amount)}
+                            </td>
+                            <td className="px-5 py-3.5 text-ink-soft">
+                              {r.account?.name ?? "—"}
+                            </td>
+                            <td className="px-5 py-3.5">
+                              <div className="flex justify-end">
+                                <RowMenu
+                                  onView={() =>
+                                    r.lending_record_id &&
+                                    navigate(`/lending/${r.lending_record_id}`)
+                                  }
+                                  onDelete={() => setDeleting(r)}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3 text-sm text-ink-soft dark:border-white/10">
+              {/* Mobile cards — a 7-column table doesn't fit a phone; show
+                  each repayment as a card instead of forcing horizontal
+                  scroll on financial transaction data. */}
+              <div className="mt-4 space-y-2 md:hidden">
+                {pageRows.map((r) => {
+                  const name = r.record?.borrower_name ?? "—";
+                  return (
+                    <div key={r.id} className="card p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-success/12 text-xs font-bold text-success">
+                            {name.charAt(0).toUpperCase()}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{name}</p>
+                            <p className="text-xs text-ink-soft">
+                              {formatDate(r.payment_date, "dd MMM yyyy")}
+                              {r.account?.name ? ` · ${r.account.name}` : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <RowMenu
+                          onView={() =>
+                            r.lending_record_id &&
+                            navigate(`/lending/${r.lending_record_id}`)
+                          }
+                          onDelete={() => setDeleting(r)}
+                        />
+                      </div>
+                      <div className="mt-2.5 grid grid-cols-3 gap-2 border-t border-line pt-2.5 text-xs dark:border-white/10">
+                        <div>
+                          <p className="text-ink-soft">Principal</p>
+                          <p className="font-semibold">{formatCurrency(r.principal_amount)}</p>
+                        </div>
+                        <div>
+                          <p className="text-ink-soft">Interest</p>
+                          <p className="font-semibold text-success">{formatCurrency(r.interest_amount)}</p>
+                        </div>
+                        <div>
+                          <p className="text-ink-soft">Total</p>
+                          <p className="font-bold">{formatCurrency(r.amount)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Shared pagination footer */}
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-ink-soft">
                 <span>
                   Showing {(page - 1) * PAGE_SIZE + 1} to{" "}
                   {Math.min(page * PAGE_SIZE, filtered.length)} of{" "}
@@ -450,7 +502,7 @@ export default function LendingReceivedPage() {
                   </button>
                 </div>
               </div>
-            </div>
+            </>
           )}
 
           <div className="mt-4 flex items-center gap-2 rounded-2xl bg-success/[0.06] p-3.5 text-sm dark:bg-success/10">

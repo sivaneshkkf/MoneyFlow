@@ -156,7 +156,7 @@ export default function LendingForm({ initial, onDone }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Borrower name" error={errors.borrower_name?.message}>
           <TextInput {...register('borrower_name')} autoFocus />
         </Field>
@@ -164,7 +164,7 @@ export default function LendingForm({ initial, onDone }) {
           <TextInput {...register('phone')} />
         </Field>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Email" error={errors.email?.message}>
           <TextInput type="email" {...register('email')} />
         </Field>
@@ -173,7 +173,7 @@ export default function LendingForm({ initial, onDone }) {
         </Field>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Amount lent (₹)" error={errors.principal_amount?.message} hint={editing ? 'Locked after creation' : undefined}>
           <MoneyInput disabled={editing} {...register('principal_amount')} />
         </Field>
@@ -189,7 +189,7 @@ export default function LendingForm({ initial, onDone }) {
         </Field>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Lending date" error={errors.lending_date?.message}>
           <TextInput type="date" {...register('lending_date')} />
         </Field>
@@ -212,7 +212,7 @@ export default function LendingForm({ initial, onDone }) {
 
       {scheduled && !lockedSchedule && (
         <div className="rounded-xl border border-line p-3 dark:border-white/10">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="First installment due" error={errors.first_due_date?.message}>
               <TextInput type="date" {...register('first_due_date')} />
             </Field>
@@ -228,7 +228,7 @@ export default function LendingForm({ initial, onDone }) {
         </div>
       )}
 
-      <div className={scheduled ? '' : 'grid grid-cols-2 gap-3'}>
+      <div className={scheduled ? '' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
         <Field label="Interest type" error={errors.interest_type?.message}>
           <Select {...register('interest_type')} disabled={lockedSchedule}>
             {Object.entries(INTEREST_TYPES).map(([k, v]) => (

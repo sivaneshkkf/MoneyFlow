@@ -67,7 +67,7 @@ function RowMenu({ items }) {
         ref={btnRef}
         onClick={() => setOpen((v) => !v)}
         aria-label="Installment actions"
-        className="rounded-lg p-1 text-ink-soft transition hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5"
+        className="rounded-lg p-2 text-ink-soft transition hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5"
       >
         <MoreVertical className="h-4 w-4" />
       </button>

@@ -33,17 +33,18 @@ export default function LendingOverview() {
         }
       />
       <div className="relative flex items-start justify-start gap-4">
-        <dl className="grid grid-cols-2 gap-12">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:gap-x-12">
           {rows.map(([label, value, tone]) => (
-            <div key={label}>
+            <div key={label} className="min-w-0">
               <dt className="text-xs text-ink-soft">{label}</dt>
-              <dd className={`text-lg font-bold ${tone}`}>
+              {/* Wraps rather than truncates — a currency value must never
+                  lose digits to an ellipsis just to fit a narrow column. */}
+              <dd className={`text-lg font-bold leading-tight ${tone}`}>
                 {formatCurrency(value)}
               </dd>
             </div>
           ))}
         </dl>
-        <div className="flex flex-col"></div>
         <img
           src="/walletImg.png"
           alt=""

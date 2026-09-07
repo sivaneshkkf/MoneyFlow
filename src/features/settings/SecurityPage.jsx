@@ -104,7 +104,7 @@ export default function SecurityPage() {
             </div>
           </div>
 
-          <div className="mb-1.5 flex items-center justify-between gap-3">
+          <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             <label className="text-sm font-semibold">New password</label>
             <span className="inline-flex items-center gap-1.5 text-xs text-success">
               <ShieldCheck className="h-3.5 w-3.5" /> Use at least 8 characters

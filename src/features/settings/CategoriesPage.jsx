@@ -161,7 +161,7 @@ function RowMenu({ category, onEdit, onDelete }) {
         ref={btnRef}
         onClick={() => setOpen((v) => !v)}
         aria-label={`More actions for ${category.name}`}
-        className="rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5"
+        className="rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5"
       >
         <MoreVertical className="h-4 w-4" />
       </button>
@@ -287,7 +287,7 @@ export default function CategoriesPage() {
                         <span className="flex-1 truncate text-sm font-medium">{c.name}</span>
                         {c.is_default && <Badge tone="neutral">Default</Badge>}
                         <button
-                          className="rounded-lg p-1.5 text-ink-soft hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5"
+                          className="rounded-lg p-2 text-ink-soft hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5"
                           onClick={() => openEdit(c)}
                           aria-label={`Edit ${c.name}`}
                         >

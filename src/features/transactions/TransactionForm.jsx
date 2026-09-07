@@ -73,7 +73,7 @@ export default function TransactionForm({ initial, lockedType, onDone }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Amount (₹)" error={errors.amount?.message}>
           <MoneyInput {...register('amount')} autoFocus />
         </Field>
@@ -93,7 +93,7 @@ export default function TransactionForm({ initial, lockedType, onDone }) {
         </Select>
       </Field>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Account" error={errors.account_id?.message}>
           <Select renderOption={renderAccountOption(accounts)} {...register('account_id')}>
             <option value="">No account</option>

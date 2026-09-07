@@ -43,7 +43,8 @@ src/
   constants/    index.js
   routes/       AppRoutes.jsx
 supabase/migrations/   001 … 014 (see below)
-public/       sw.js, manifest.webmanifest, logo.png, logoHorizontal.png, logoVertical.png
+public/       logo.png, icon-192.png, icon-512.png, logoHorizontal.png, logoVertical.png
+              (sw.js and manifest.webmanifest are generated at build time by vite-plugin-pwa)
 ```
 
 ## 2. Installed packages
@@ -153,8 +154,9 @@ npm run build     # outputs dist/
 Deploy `dist/` as a static site (Vercel, Netlify, Cloudflare Pages, Supabase Hosting…).
 SPA fallback: rewrite all paths to `/index.html`. Set `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_PUBLISHABLE_KEY` in the host's env. Add the deployed origin to Supabase
-Auth URL configuration and the Google OAuth redirect list. The service worker
-(`/sw.js`) registers automatically in production and caches only the static shell.
+Auth URL configuration and the Google OAuth redirect list. The service worker is
+generated and registered automatically by `vite-plugin-pwa` (see `vite.config.js`)
+and caches only the static app shell.
 
 ## 10. Feature list
 

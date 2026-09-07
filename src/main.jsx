@@ -9,10 +9,7 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      /* offline shell is a progressive enhancement */
-    })
-  })
-}
+// Service worker registration is handled by vite-plugin-pwa (registerType:
+// 'autoUpdate' in vite.config.js) — it injects its own registration script
+// into the built index.html, so no manual navigator.serviceWorker.register
+// call is needed here.

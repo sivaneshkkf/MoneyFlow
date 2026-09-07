@@ -100,7 +100,7 @@ function MiniTile({ icon: Icon, tint, label, value, foot, footTone }) {
 function ChartCard({ title, subtitle, right, children }) {
   return (
     <div className="card p-5">
-      <div className="mb-4 flex items-start justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">{title}</h2>
           {subtitle && <p className="mt-0.5 text-xs text-ink-soft">{subtitle}</p>}
@@ -151,13 +151,13 @@ export default function AnalyticsPage() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-xl border border-line p-0.5 dark:border-white/10">
+          <div className="flex max-w-full overflow-x-auto rounded-xl border border-line p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-white/10">
             {ANALYTICS_RANGES.map((r) => (
               <button
                 key={r.key}
                 onClick={() => setRange(r.key)}
                 className={clsx(
-                  'rounded-lg px-2.5 py-1 text-xs font-medium transition',
+                  'shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium transition',
                   range === r.key ? 'bg-dark text-white dark:bg-brand-700' : 'text-ink-soft hover:bg-brand-50 dark:hover:bg-white/5',
                 )}
               >

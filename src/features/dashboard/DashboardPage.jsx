@@ -52,7 +52,7 @@ export default function DashboardPage() {
               <Skeleton className="mt-1 h-10 w-48 bg-white/10" />
             ) : (
               <>
-                <p className="mt-1 text-4xl font-extrabold tracking-tight">
+                <p className="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl">
                   {formatCurrency(metrics.availableBalance)}
                 </p>
                 <p className="mt-1 text-xs text-white/55">

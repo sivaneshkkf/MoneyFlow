@@ -2,12 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#172321" />
     <meta name="description" content="MoneyFlow — Take control of your money. Personal finance, budgeting, savings and lending." />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- manifest link + service worker registration are injected automatically
+         by vite-plugin-pwa at build time (see vite.config.js) -->
     <title>MoneyFlow — Take control of your money.</title>
   </head>
   <body>

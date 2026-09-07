@@ -1,11 +1,11 @@
-import { NavLink } from 'react-router-dom'
-import clsx from 'clsx'
-import { LogOut } from 'lucide-react'
-import MoneyFlowLogo from '../branding/MoneyFlowLogo'
-import MobileDrawer from './MobileDrawer'
-import { navSections } from './navConfig'
-import { useAuth } from '../../features/auth/AuthProvider'
-import { useProfile } from '../../features/settings/useProfile'
+import { NavLink } from "react-router-dom";
+import clsx from "clsx";
+import { LogOut } from "lucide-react";
+import MoneyFlowLogo from "../branding/MoneyFlowLogo";
+import MobileDrawer from "./MobileDrawer";
+import { navSections } from "./navConfig";
+import { useAuth } from "../../features/auth/AuthProvider";
+import { useProfile } from "../../features/settings/useProfile";
 
 function NavList({ onNavigate }) {
   return (
@@ -26,10 +26,10 @@ function NavList({ onNavigate }) {
                       // py-2.5 (not py-2): keeps the ~44px touch target the
                       // mobile drawer needs, without visibly changing the
                       // desktop sidebar's density.
-                      'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
                       isActive
-                        ? 'bg-dark text-white dark:bg-brand-700'
-                        : 'text-ink-soft hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5 dark:hover:text-white',
+                        ? "bg-dark text-white dark:bg-brand-700"
+                        : "text-ink-soft hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5 dark:hover:text-white",
                     )
                   }
                 >
@@ -42,21 +42,23 @@ function NavList({ onNavigate }) {
         </div>
       ))}
     </nav>
-  )
+  );
 }
 
 function ProfileFooter() {
-  const { signOut } = useAuth()
-  const { data: profile } = useProfile()
+  const { signOut } = useAuth();
+  const { data: profile } = useProfile();
 
   return (
     <div className="border-t border-line p-3 dark:border-white/10">
       <div className="flex items-center gap-3 rounded-xl px-3 py-2">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-900">
-          {(profile?.full_name || 'U').slice(0, 1).toUpperCase()}
+          {(profile?.full_name || "U").slice(0, 1).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{profile?.full_name || 'MoneyFlow user'}</p>
+          <p className="truncate text-sm font-semibold">
+            {profile?.full_name || "MoneyFlow user"}
+          </p>
           <p className="truncate text-xs text-ink-soft">{profile?.email}</p>
         </div>
         <button
@@ -68,19 +70,19 @@ function ProfileFooter() {
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 export default function Sidebar() {
   return (
     <aside className="no-print hidden h-full w-64 shrink-0 flex-col border-r border-line bg-white dark:border-white/10 dark:bg-[#131B19] lg:flex">
       <div className="flex h-16 items-center px-5">
-        <MoneyFlowLogo size="h-8" to="/dashboard" />
+        <MoneyFlowLogo size="h-12" to="/dashboard" tagline={true} />
       </div>
       <NavList />
       <ProfileFooter />
     </aside>
-  )
+  );
 }
 
 /** Mobile equivalent of Sidebar — every route the desktop sidebar can
@@ -94,5 +96,5 @@ export function MobileSidebarDrawer({ open, onClose }) {
       <NavList onNavigate={onClose} />
       <ProfileFooter />
     </MobileDrawer>
-  )
+  );
 }

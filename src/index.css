@@ -96,15 +96,43 @@ body {
   .label {
     @apply mb-1.5 block text-sm font-medium text-ink-soft;
   }
-  /* Sticky action bar at the bottom of a Modal's scroll area. */
+  /* Sticky action bar at the bottom of a Modal's scroll area. Mobile: full-
+     width stacked buttons, primary action on top (flex-col-reverse puts the
+     last child — always the submit/primary button by convention — first).
+     sm+: back to a normal right-aligned row, unchanged from before. */
   .modal-actions {
-    @apply sticky bottom-0 z-10 -mx-5 -mb-4 mt-5 flex justify-end gap-2 border-t border-line bg-white px-5 py-3
-      dark:border-white/10 dark:bg-[#161F1D];
+    @apply sticky bottom-0 z-10 -mx-5 -mb-4 mt-5 flex flex-col-reverse gap-2 border-t border-line bg-white px-5 py-3
+      dark:border-white/10 dark:bg-[#161F1D] sm:flex-row sm:justify-end [&>button]:w-full sm:[&>button]:w-auto;
   }
 }
 
 @media print {
   .no-print {
     display: none !important;
+  }
+}
+
+/* Install-app CTA: a soft looping glow + a gentle "nudge" on the download
+   icon, evoking a download motion. An ambient loop (not a hover/tap
+   transition), so it runs on a slower, gentler cycle than the app's usual
+   150–250ms interaction timing. */
+@keyframes install-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(47, 111, 99, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(47, 111, 99, 0); }
+}
+@keyframes install-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
+}
+.animate-install-pulse {
+  animation: install-pulse 2.4s ease-in-out infinite;
+}
+.animate-install-bob {
+  animation: install-bob 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-install-pulse,
+  .animate-install-bob {
+    animation: none;
   }
 }

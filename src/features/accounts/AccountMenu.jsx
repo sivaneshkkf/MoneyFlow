@@ -60,7 +60,7 @@ export default function AccountMenu({ account, onView, onEdit, onRefresh, onTogg
         aria-label="Account actions"
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`rounded-lg p-1 transition ${
+        className={`rounded-lg p-2 transition ${
           tone === 'dark'
             ? 'text-white/70 hover:bg-white/15 hover:text-white'
             : 'text-ink-soft hover:bg-brand-50 hover:text-ink dark:hover:bg-white/10'

@@ -33,14 +33,17 @@ export default function SettingsLayout() {
           </div>
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-1.5">
+        {/* 7 tabs wrapping into multiple rows looks awkward on a phone —
+            scroll horizontally in one row instead, same pattern used for
+            filter pills elsewhere in the app. */}
+        <div className="mb-6 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {tabs.map((t) => (
             <NavLink
               key={t.to}
               to={t.to}
               className={({ isActive }) =>
                 clsx(
-                  'inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition',
+                  'inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition',
                   isActive
                     ? 'bg-dark text-white shadow-sm dark:bg-brand-700'
                     : 'text-ink-soft hover:bg-brand-50 dark:hover:bg-white/5',

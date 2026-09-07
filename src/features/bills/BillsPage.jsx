@@ -109,7 +109,7 @@ export default function BillsPage() {
         </button>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Upcoming" amount={formatCurrency(summary?.upcoming ?? 0)} icon={CalendarClock} hint="Not yet due" />
         <StatCard title="Due this month" amount={formatCurrency(summary?.dueThisMonth ?? 0)} icon={Wallet} hint="This calendar month" />
         <StatCard

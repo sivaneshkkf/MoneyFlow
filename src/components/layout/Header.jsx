@@ -6,6 +6,7 @@ import NotificationBell from '../../features/notifications/NotificationBell'
 import PlanBadge from '../../features/subscription/components/PlanBadge'
 import { useAdminAccess } from '../../features/admin/hooks/useAdmin'
 import HelpMenu from './HelpMenu'
+import InstallAppButton from './InstallAppButton'
 
 export default function Header({ onMenuClick }) {
   const { theme, setTheme } = useTheme()
@@ -40,6 +41,7 @@ export default function Header({ onMenuClick }) {
         <button className="btn-ghost !p-2 lg:hidden" onClick={openPalette} aria-label="Search">
           <Search className="h-4 w-4" />
         </button>
+        <InstallAppButton />
         <HelpMenu />
         <PlanBadge className="hidden sm:inline-flex" />
         {isAdmin && (

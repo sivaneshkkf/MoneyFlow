@@ -318,7 +318,7 @@ export default function BudgetsPage() {
                   {catCount}
                 </span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-32">
                   <option value="all">All ({catCount})</option>
                   <option value="healthy">Under budget</option>

@@ -149,7 +149,7 @@ function GoalMenu({ items }) {
         ref={btnRef}
         onClick={() => setOpen((v) => !v)}
         aria-label="Goal actions"
-        className="rounded-lg p-1 text-ink-soft transition hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5"
+        className="rounded-lg p-2 text-ink-soft transition hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5"
       >
         <MoreVertical className="h-4 w-4" />
       </button>
@@ -287,20 +287,29 @@ function GoalCard({ goal, actions }) {
         </div>
       )}
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-1 gap-y-1 border-t border-line pt-3 text-xs dark:border-white/10">
-        <button className="inline-flex items-center gap-1.5 px-2 py-1 text-ink-soft hover:text-ink" onClick={actions.onHistory}>
+      <div className="mt-3 flex flex-wrap items-center gap-1 border-t border-line pt-3 text-xs dark:border-white/10">
+        <button
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-ink-soft transition hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5"
+          onClick={actions.onHistory}
+        >
           <History className="h-3.5 w-3.5" /> History
         </button>
-        <span className="text-line">|</span>
-        <button className="inline-flex items-center gap-1.5 px-2 py-1 text-ink-soft hover:text-ink" onClick={actions.onEdit}>
+        <button
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-ink-soft transition hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5"
+          onClick={actions.onEdit}
+        >
           <Pencil className="h-3.5 w-3.5" /> Edit
         </button>
-        <span className="text-line">|</span>
-        <button className="inline-flex items-center gap-1.5 px-2 py-1 text-ink-soft hover:text-ink" onClick={actions.onMove}>
+        <button
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-ink-soft transition hover:bg-brand-50 hover:text-ink dark:hover:bg-white/5"
+          onClick={actions.onMove}
+        >
           <ArrowLeftRight className="h-3.5 w-3.5" /> Move funds
         </button>
-        <span className="text-line">|</span>
-        <button className="inline-flex items-center gap-1.5 px-2 py-1 text-danger hover:opacity-80" onClick={actions.onDelete}>
+        <button
+          className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-danger transition hover:bg-danger/10"
+          onClick={actions.onDelete}
+        >
           <Trash2 className="h-3.5 w-3.5" /> Delete
         </button>
       </div>

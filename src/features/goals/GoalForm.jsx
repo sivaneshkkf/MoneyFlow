@@ -65,7 +65,7 @@ export default function GoalForm({ initial, onDone }) {
       <Field label="Goal name" error={errors.name?.message}>
         <TextInput placeholder="e.g. Emergency Fund" {...register('name')} autoFocus />
       </Field>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Target amount (₹)" error={errors.target_amount?.message}>
           <MoneyInput {...register('target_amount')} />
         </Field>
