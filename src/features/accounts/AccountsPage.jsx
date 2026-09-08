@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Wallet } from "lucide-react";
+import { Plus, Wallet, ArrowLeftRight } from "lucide-react";
 import { PageContainer, EmptyState, ErrorState } from "../../components/common";
 import Modal from "../../components/common/Modal";
 import ConfirmDialog from "../../components/common/ConfirmDialog";
@@ -15,6 +15,7 @@ import AccountCard from "./AccountCard";
 import AccountList from "./AccountList";
 import AccountSkeleton from "./AccountSkeleton";
 import AccountForm from "./AccountForm";
+import TransferForm from "./TransferForm";
 import { useSubscriptionLimits } from "../subscription/hooks/useSubscriptionLimits";
 import UpgradeModal from "../subscription/components/UpgradeModal";
 
@@ -37,6 +38,7 @@ export default function AccountsPage() {
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
   const { canCreate } = useSubscriptionLimits();
 
   const all = accounts ?? EMPTY;
@@ -109,9 +111,16 @@ export default function AccountsPage() {
       title="Accounts"
       subtitle="Bank, cash, cards and wallets — your money at a glance."
       action={
-        <button className="btn-primary" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> Add Account
-        </button>
+        <div className="flex flex-wrap gap-2">
+          {all.length >= 2 && (
+            <button className="btn-ghost" onClick={() => setTransferOpen(true)}>
+              <ArrowLeftRight className="h-4 w-4" /> Transfer
+            </button>
+          )}
+          <button className="btn-primary" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> Add Account
+          </button>
+        </div>
       }
     >
       <div className="mb-6">
@@ -199,6 +208,14 @@ export default function AccountsPage() {
         size="lg"
       >
         <AccountForm initial={editing} onDone={() => setFormOpen(false)} />
+      </Modal>
+
+      <Modal
+        open={transferOpen}
+        onClose={() => setTransferOpen(false)}
+        title="Transfer money"
+      >
+        <TransferForm onDone={() => setTransferOpen(false)} />
       </Modal>
 
       <ConfirmDialog

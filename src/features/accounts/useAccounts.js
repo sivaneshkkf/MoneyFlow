@@ -71,5 +71,25 @@ export function useAccountMutations() {
     onSuccess: invalidate,
   })
 
-  return { create, update, remove, recalc }
+  // Pure cash movement between two of the user's own accounts — never
+  // touches transactions (see transfer_between_accounts()'s comment), so it
+  // can never inflate Income/Expense totals. Credit cards are rejected on
+  // both sides server-side; the form also filters them out of both pickers.
+  const transfer = useMutation({
+    mutationFn: async ({ fromAccountId, toAccountId, amount, date, notes, clientToken }) => {
+      const { data, error } = await supabase.rpc('transfer_between_accounts', {
+        p_from_account: fromAccountId,
+        p_to_account: toAccountId,
+        p_amount: amount,
+        p_date: date,
+        p_notes: notes || null,
+        p_client_token: clientToken ?? null,
+      })
+      if (error) throw error
+      return data
+    },
+    onSuccess: invalidate,
+  })
+
+  return { create, update, remove, recalc, transfer }
 }
