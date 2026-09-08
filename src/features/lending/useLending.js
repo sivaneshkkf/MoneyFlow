@@ -163,6 +163,39 @@ export function useBorrowers() {
   })
 }
 
+// Lightweight per-borrower directory (name + latest contact details) for the
+// "Add lent money" form's search-as-you-type autofill. Deliberately separate
+// from useBorrowers() (which aggregates financials for the Borrowers list) —
+// this only needs the most recent contact info recorded for each name.
+export function useBorrowerDirectory() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['lending', 'borrower-directory', user?.id],
+    enabled: Boolean(user?.id),
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('lending_records')
+        .select('borrower_name, phone, email, address, created_at')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      const map = new Map()
+      for (const r of data ?? []) {
+        // First row seen per name is the most recent (already ordered desc).
+        if (!map.has(r.borrower_name)) {
+          map.set(r.borrower_name, {
+            borrower_name: r.borrower_name,
+            phone: r.phone ?? '',
+            email: r.email ?? '',
+            address: r.address ?? '',
+          })
+        }
+      }
+      return [...map.values()].sort((a, b) => a.borrower_name.localeCompare(b.borrower_name))
+    },
+  })
+}
+
 export function useLendingTrend(months = 6) {
   const { user } = useAuth()
   return useQuery({
