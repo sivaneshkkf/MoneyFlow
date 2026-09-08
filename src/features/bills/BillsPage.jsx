@@ -12,6 +12,7 @@ import PaymentForm from './PaymentForm'
 import { FILTERS, SORTS, kindMeta, frequencyLabel, occurrenceDueLabel } from './billMeta'
 import { useSubscriptionLimits } from '../subscription/hooks/useSubscriptionLimits'
 import UpgradeModal from '../subscription/components/UpgradeModal'
+import CreditCardBillsSection from '../creditCards/CreditCardBillsSection'
 
 const TONE_TEXT = {
   danger: 'text-danger',
@@ -222,6 +223,8 @@ export default function BillsPage() {
         />
         <StatCard title="Active payments" amount={String(summary?.activeCount ?? 0)} icon={CircleCheck} hint="Bills, EMIs & subs" />
       </div>
+
+      <CreditCardBillsSection />
 
       {/* This month's payments */}
       <div className="mb-8">
