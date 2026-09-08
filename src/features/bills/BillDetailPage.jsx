@@ -14,6 +14,7 @@ import { useRecurringPayment, useBillMutations } from './useBills'
 import BillForm from './BillForm'
 import PaymentForm from './PaymentForm'
 import PaymentScheduleTimeline from './PaymentScheduleTimeline'
+import DeletePaymentDialog from './DeletePaymentDialog'
 import { kindMeta, frequencyLabel, occurrenceDueLabel, OCC_STATUS_META } from './billMeta'
 
 export default function BillDetailPage() {
@@ -277,25 +278,37 @@ export default function BillDetailPage() {
       <Modal open={Boolean(payOcc)} onClose={() => setPayOcc(null)} title="Record payment">
         {payOcc && <PaymentForm occurrence={payOcc} recurring={rec} onDone={() => setPayOcc(null)} />}
       </Modal>
-      <ConfirmDialog
-        open={confirmDelete}
-        onClose={() => setConfirmDelete(false)}
-        onConfirm={() =>
-          // hard delete when there is no payment history; the RPC falls back to
-          // archiving (status = 'ended') automatically if any payment exists.
-          act(() => remove.mutateAsync({ id: rec.id, hard: true }), 'Recurring payment deleted.').then(() =>
-            navigate('/bills'),
-          )
-        }
-        title="Delete recurring payment?"
-        message={
-          paidOcc.length > 0
-            ? 'This payment has recorded history, so it will be archived (marked Ended). Every payment you already recorded stays in your transactions.'
-            : 'This removes the payment and its whole schedule. Nothing has been paid yet, so there is nothing to keep.'
-        }
-        confirmLabel="Delete"
-        loading={remove.isPending}
-      />
+      {paidOcc.length > 0 ? (
+        <DeletePaymentDialog
+          open={confirmDelete}
+          onClose={() => setConfirmDelete(false)}
+          loading={remove.isPending}
+          onArchive={() =>
+            act(() => remove.mutateAsync({ id: rec.id, hard: false }), 'Archived — payment history kept.').then(
+              () => navigate('/bills'),
+            )
+          }
+          onDeleteAll={() =>
+            act(() => remove.mutateAsync({ id: rec.id, hard: true }), 'Deleted, including payment history.').then(
+              () => navigate('/bills'),
+            )
+          }
+        />
+      ) : (
+        <ConfirmDialog
+          open={confirmDelete}
+          onClose={() => setConfirmDelete(false)}
+          onConfirm={() =>
+            act(() => remove.mutateAsync({ id: rec.id, hard: true }), 'Recurring payment deleted.').then(() =>
+              navigate('/bills'),
+            )
+          }
+          title="Delete recurring payment?"
+          message="This removes the payment and its whole schedule. Nothing has been paid yet, so there is nothing to keep."
+          confirmLabel="Delete"
+          loading={remove.isPending}
+        />
+      )}
     </PageContainer>
   )
 }
