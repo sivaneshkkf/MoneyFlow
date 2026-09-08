@@ -9,7 +9,6 @@ import { formatCurrency, formatDate } from '../../utils/format'
 import { useRecurringPayments, useBillsSummary, useProcessRecurring } from './useBills'
 import BillForm from './BillForm'
 import PaymentForm from './PaymentForm'
-import MonthlyPaymentsModal from './MonthlyPaymentsModal'
 import { FILTERS, SORTS, kindMeta, frequencyLabel, occurrenceDueLabel } from './billMeta'
 import { useSubscriptionLimits } from '../subscription/hooks/useSubscriptionLimits'
 import UpgradeModal from '../subscription/components/UpgradeModal'
@@ -62,8 +61,9 @@ function OccurrenceCard({ d, o, onPay }) {
 
 // A high-frequency definition (daily, most often) can have dozens of
 // occurrences in one month — one summary card instead of flooding the grid,
-// "View all" opens MonthlyPaymentsModal with the full pending/paid list.
-function MonthGroupCard({ d, occurrences, onOpen }) {
+// "View all" goes to the definition's own detail page, which already lists
+// every occurrence (Upcoming occurrences + Payment history).
+function MonthGroupCard({ d, occurrences }) {
   const meta = kindMeta(d.kind)
   const pending = occurrences.filter((o) => o.status !== 'paid')
   const paidCount = occurrences.length - pending.length
@@ -72,9 +72,8 @@ function MonthGroupCard({ d, occurrences, onOpen }) {
   const due = next ? occurrenceDueLabel(next.due_date, next.status) : null
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
+    <Link
+      to={`/bills/${d.id}`}
       className="card group flex flex-col gap-3 p-4 text-left transition hover:border-brand-400 dark:hover:border-brand-400/60"
     >
       <div className="flex items-start gap-3">
@@ -101,7 +100,7 @@ function MonthGroupCard({ d, occurrences, onOpen }) {
       <span className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-line py-2 text-sm font-semibold text-ink-soft transition group-hover:text-ink dark:border-white/10">
         View all <ChevronRight className="h-3.5 w-3.5" />
       </span>
-    </button>
+    </Link>
   )
 }
 
@@ -113,7 +112,6 @@ export default function BillsPage() {
   const [addOpen, setAddOpen] = useState(false)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
   const [pay, setPay] = useState(null) // { occurrence, def }
-  const [monthGroupOpen, setMonthGroupOpen] = useState(null) // { def, occurrences }
   const [filter, setFilter] = useState('all')
   const [sort, setSort] = useState('next_due')
   const [q, setQ] = useState('')
@@ -132,7 +130,7 @@ export default function BillsPage() {
   // which would otherwise flood this grid with near-identical cards. Each
   // group carries every one of that definition's occurrences for the
   // month (sorted, unpaid first); the card itself only shows a summary,
-  // with "View all" opening the full list (MonthlyPaymentsModal).
+  // with "View all" going to the definition's own detail page.
   const upcomingGroups = useMemo(() => {
     const now = new Date()
     const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}` // yyyy-MM
@@ -243,12 +241,7 @@ export default function BillsPage() {
                   onPay={(o) => setPay({ occurrence: o, def: d })}
                 />
               ) : (
-                <MonthGroupCard
-                  key={d.id}
-                  d={d}
-                  occurrences={occurrences}
-                  onOpen={() => setMonthGroupOpen({ def: d, occurrences })}
-                />
+                <MonthGroupCard key={d.id} d={d} occurrences={occurrences} />
               ),
             )}
           </div>
@@ -353,16 +346,6 @@ export default function BillsPage() {
       <Modal open={Boolean(pay)} onClose={() => setPay(null)} title="Record payment">
         {pay && <PaymentForm occurrence={pay.occurrence} recurring={pay.def} onDone={() => setPay(null)} />}
       </Modal>
-      <MonthlyPaymentsModal
-        def={monthGroupOpen?.def}
-        occurrences={monthGroupOpen?.occurrences ?? []}
-        onClose={() => setMonthGroupOpen(null)}
-        onPay={(o) => {
-          const def = monthGroupOpen?.def
-          setMonthGroupOpen(null)
-          setPay({ occurrence: o, def })
-        }}
-      />
       <UpgradeModal
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
