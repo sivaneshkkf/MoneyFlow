@@ -20,7 +20,7 @@ export default function BillDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
-  const { data: rec, isLoading, isError, refetch } = useRecurringPayment(id)
+  const { data: rec, isLoading, isError, error, refetch } = useRecurringPayment(id)
   const { setStatus, remove, skip } = useBillMutations()
 
   const [editOpen, setEditOpen] = useState(false)
@@ -35,12 +35,24 @@ export default function BillDetailPage() {
   const nextOcc = openOcc[0] ?? null
 
   if (isLoading) return <PageContainer><Skeleton className="h-96 w-full" /></PageContainer>
-  if (isError || !rec)
+  if (isError || !rec) {
+    // PGRST116 = "0 rows" from .single() — the record is genuinely gone
+    // (deleted, including straight from the database), not a transient
+    // fetch failure, so Retry would just fail again forever. Either way,
+    // give the user a way back instead of stranding them here.
+    const notFound = error?.code === 'PGRST116'
     return (
       <PageContainer>
-        <ErrorState message="Unable to load this payment." onRetry={refetch} />
+        <Link to="/bills" className="mb-4 inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink">
+          <ArrowLeft className="h-4 w-4" /> Back to Bills &amp; Recurring
+        </Link>
+        <ErrorState
+          message={notFound ? 'This payment no longer exists — it may have been deleted.' : 'Unable to load this payment.'}
+          onRetry={notFound ? undefined : refetch}
+        />
       </PageContainer>
     )
+  }
 
   const meta = kindMeta(rec.kind)
   const isEmi = rec.kind === 'emi'
