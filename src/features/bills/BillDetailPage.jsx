@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
-  ArrowLeft, Pencil, Trash2, Pause, Play, SkipForward, Zap, Bell, CircleCheck,
+  ArrowLeft, Pencil, Trash2, Pause, Play, SkipForward, Zap, Bell, CircleCheck, CalendarPlus, Infinity as InfinityIcon,
 } from 'lucide-react'
 import { PageContainer, Badge, Skeleton, ErrorState, ProgressBar } from '../../components/common'
 import Modal from '../../components/common/Modal'
@@ -22,7 +22,7 @@ export default function BillDetailPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data: rec, isLoading, isError, error, refetch } = useRecurringPayment(id)
-  const { setStatus, remove, skip } = useBillMutations()
+  const { setStatus, remove, skip, generateNextOccurrence } = useBillMutations()
 
   const [editOpen, setEditOpen] = useState(false)
   const [payOcc, setPayOcc] = useState(null)
@@ -74,6 +74,20 @@ export default function BillDetailPage() {
     ? Math.min(100, (lia.installments_paid / lia.installments_total) * 100)
     : 0
 
+  // "Add next payment" only makes sense for an ongoing rolling-horizon item —
+  // an EMI's full schedule is already generated upfront, and a one_time
+  // payment only ever has its single occurrence by design.
+  const canAddNext = !isEmi && rec.frequency !== 'one_time' && !ended && !paused
+
+  const addNextPayment = () =>
+    generateNextOccurrence.mutateAsync(rec.id).then((result) => {
+      toast[result.created ? 'success' : 'info'](
+        result.created
+          ? `Next payment added — due ${formatDate(result.due_date)}.`
+          : `Next payment already scheduled for ${formatDate(result.due_date)}.`,
+      )
+    }, (e) => toast.error(friendlyError(e)))
+
   return (
     <PageContainer>
       <Link to="/bills" className="mb-4 inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink">
@@ -105,6 +119,17 @@ export default function BillDetailPage() {
                 {formatCurrency(rec.amount)} · {frequencyLabel(rec.frequency)}
                 {rec.merchant_name ? ` · ${rec.merchant_name}` : ''}
               </p>
+              {rec.frequency !== 'one_time' && !isEmi && (
+                <p className="mt-0.5 flex items-center gap-1 text-xs text-ink-soft">
+                  {rec.end_date ? (
+                    <>Ends {formatDate(rec.end_date)}</>
+                  ) : (
+                    <>
+                      <InfinityIcon className="h-3 w-3" /> Ongoing — no end date
+                    </>
+                  )}
+                </p>
+              )}
               <p className="mt-0.5 flex items-center gap-1 text-xs text-ink-soft">
                 <Bell className="h-3 w-3" />
                 {rec.reminder_days_before === 0 ? 'Remind on due date' : `Remind ${rec.reminder_days_before} days before`}
@@ -141,6 +166,11 @@ export default function BillDetailPage() {
                 onClick={() => act(() => skip.mutateAsync(nextOcc.id), 'Next payment skipped.')}
               >
                 <SkipForward className="h-4 w-4" /> Skip next
+              </button>
+            )}
+            {canAddNext && (
+              <button className="btn-ghost" onClick={addNextPayment} disabled={generateNextOccurrence.isPending}>
+                <CalendarPlus className="h-4 w-4" /> Add next payment
               </button>
             )}
             <button className="btn bg-danger text-white hover:bg-danger/90" onClick={() => setConfirmDelete(true)}>

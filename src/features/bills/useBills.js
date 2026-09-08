@@ -288,6 +288,22 @@ export function useBillMutations() {
     onSuccess: invalidate,
   })
 
+  // Manually pulls in the next occurrence for an ongoing (no End Date) bill/
+  // subscription/recurring payment, ahead of the rolling horizon's usual
+  // ~95-day window — useful for longer frequencies (yearly, quarterly)
+  // where the next due date wouldn't otherwise show up for months. Safe to
+  // call repeatedly: { created: false } means it already existed.
+  const generateNextOccurrence = useMutation({
+    mutationFn: async (recurringId) => {
+      const { data, error } = await supabase.rpc('generate_next_recurring_occurrence', {
+        p_recurring: recurringId,
+      })
+      if (error) throw error
+      return data
+    },
+    onSuccess: invalidate,
+  })
+
   const recordPayment = useMutation({
     mutationFn: async ({ occurrenceId, amount, date, accountId, categoryId, paymentMethodId, notes, clientToken }) => {
       const { data, error } = await supabase.rpc('record_bill_payment', {
@@ -328,5 +344,5 @@ export function useBillMutations() {
     onSuccess: invalidate,
   })
 
-  return { create, update, setStatus, remove, skip, recordPayment, recordEmiPayment }
+  return { create, update, setStatus, remove, skip, recordPayment, recordEmiPayment, generateNextOccurrence }
 }

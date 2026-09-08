@@ -48,6 +48,9 @@ export default function BillForm({ initial, onDone }) {
       due_month: initial?.due_month ?? 1,
       start_date: initial?.start_date ?? format(new Date(), 'yyyy-MM-dd'),
       end_date: initial?.end_date ?? '',
+      // UI-only — never sent as its own field. Defaults to ongoing (checked)
+      // unless editing something that already has a real end date set.
+      no_end_date: !initial?.end_date,
       reminder_days_before: initial?.reminder_days_before ?? 3,
       autopay: initial?.autopay ?? false,
       notes: initial?.notes ?? '',
@@ -67,6 +70,7 @@ export default function BillForm({ initial, onDone }) {
   const frequency = watch('frequency')
   const isEmi = kind === 'emi'
   const installmentsTotal = Number(watch('installments_total')) || 0
+  const noEndDate = watch('no_end_date')
 
   const onSubmit = async (v) => {
     if (!v.name.trim()) return
@@ -86,7 +90,7 @@ export default function BillForm({ initial, onDone }) {
       due_weekday: ['weekly', 'biweekly'].includes(effFreq) ? num(v.due_weekday) : null,
       due_month: effFreq === 'yearly' ? num(v.due_month) : null,
       start_date: v.start_date,
-      end_date: v.end_date || null,
+      end_date: v.no_end_date ? null : v.end_date || null,
       reminder_days_before: Number(v.reminder_days_before),
       autopay: Boolean(v.autopay),
       notes: v.notes.trim() || null,
@@ -206,8 +210,12 @@ export default function BillForm({ initial, onDone }) {
         <Field label="Start date">
           <TextInput type="date" {...register('start_date')} />
         </Field>
-        <Field label="End date (optional)">
-          <TextInput type="date" {...register('end_date')} />
+        <Field label="End date">
+          <TextInput type="date" {...register('end_date')} disabled={noEndDate} />
+          <label className="mt-2 flex items-center gap-2 text-xs text-ink-soft">
+            <input type="checkbox" className="h-3.5 w-3.5" {...register('no_end_date')} />
+            No end date (ongoing) — keeps generating payments until you pause, cancel, or set an end date
+          </label>
         </Field>
       </div>
 
