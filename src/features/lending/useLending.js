@@ -396,5 +396,28 @@ export function useLendingMutations() {
     onSuccess: invalidate,
   })
 
-  return { create, update, remove, recordRepayment, deleteRepayment, generateSchedule, updateInstallmentDueDate }
+  // Installments the borrower already repaid before this loan was entered
+  // here — flip them to paid without crediting any account or creating a
+  // transaction (see mark_lending_installments_already_paid()).
+  const markInstallmentsAlreadyPaid = useMutation({
+    mutationFn: async ({ recordId, count }) => {
+      const { error } = await supabase.rpc('mark_lending_installments_already_paid', {
+        p_record: recordId,
+        p_count: count,
+      })
+      if (error) throw error
+    },
+    onSuccess: invalidate,
+  })
+
+  return {
+    create,
+    update,
+    remove,
+    recordRepayment,
+    deleteRepayment,
+    generateSchedule,
+    updateInstallmentDueDate,
+    markInstallmentsAlreadyPaid,
+  }
 }

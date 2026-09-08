@@ -27,6 +27,7 @@ const schema = z
     due_date: z.string().optional().or(z.literal('')),
     first_due_date: z.string().optional().or(z.literal('')),
     installments: z.coerce.number().int().min(1).max(600).optional(),
+    already_paid: z.coerce.number().int().min(0).optional(),
     interest_type: z.enum(['none', 'fixed', 'percentage', 'simple']),
     interest_rate: z.coerce.number().min(0, 'Rate cannot be negative').optional(),
     interest_amount: z.coerce.number().min(0, 'Interest cannot be negative').optional(),
@@ -46,6 +47,10 @@ const schema = z
     path: ['installments'],
     message: 'Enter the number of installments',
   })
+  .refine((d) => !d.already_paid || !d.installments || d.already_paid <= d.installments, {
+    path: ['already_paid'],
+    message: 'Cannot exceed the number of installments',
+  })
 
 function interestTotalOf(v) {
   const principal = Number(v.principal_amount) || 0
@@ -57,7 +62,7 @@ function interestTotalOf(v) {
 
 export default function LendingForm({ initial, onDone }) {
   const toast = useToast()
-  const { create, update, generateSchedule } = useLendingMutations()
+  const { create, update, generateSchedule, markInstallmentsAlreadyPaid } = useLendingMutations()
   const { data: accounts = [] } = useAccounts()
   const { data: borrowers = [] } = useBorrowerDirectory()
   const editing = Boolean(initial?.id)
@@ -82,6 +87,7 @@ export default function LendingForm({ initial, onDone }) {
       due_date: initial?.due_date ?? '',
       first_due_date: '',
       installments: 6,
+      already_paid: 0,
       interest_type: initial?.interest_type ?? 'none',
       interest_rate: initial?.interest_rate ?? 0,
       interest_amount: initial?.interest_amount ?? 0,
@@ -164,6 +170,12 @@ export default function LendingForm({ initial, onDone }) {
             count: Number(values.installments),
             interestTotal,
           })
+          if (Number(values.already_paid) > 0) {
+            await markInstallmentsAlreadyPaid.mutateAsync({
+              recordId: initial.id,
+              count: Number(values.already_paid),
+            })
+          }
         }
         toast.success('Lending record updated.')
       } else {
@@ -176,6 +188,12 @@ export default function LendingForm({ initial, onDone }) {
             count: Number(values.installments),
             interestTotal,
           })
+          if (Number(values.already_paid) > 0) {
+            await markInstallmentsAlreadyPaid.mutateAsync({
+              recordId: rec.id,
+              count: Number(values.already_paid),
+            })
+          }
         }
         toast.success('Lending record created.')
       }
@@ -294,6 +312,13 @@ export default function LendingForm({ initial, onDone }) {
               ≈ {formatCurrency(perInstallment)} per installment · {count} payments
             </p>
           )}
+          <Field
+            label="Already paid (optional)"
+            error={errors.already_paid?.message}
+            hint="Installments the borrower already repaid before adding this loan here. They'll show as Paid and won't affect your account balance or create a transaction."
+          >
+            <TextInput type="number" min="0" max={count || undefined} step="1" {...register('already_paid')} />
+          </Field>
         </div>
       )}
 
