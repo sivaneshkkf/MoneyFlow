@@ -191,17 +191,17 @@ export default function BillsPage() {
             </button>
           ))}
         </div>
-        <div className="flex gap-2">
-          <div className="relative flex-1 lg:w-64">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="relative flex-1 sm:w-64">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft" />
             <input
-              className="input h-9 pl-9 text-sm"
-              placeholder="Search bills, subscriptions or merchants…"
+              className="input h-9 w-full pl-9 text-sm"
+              placeholder="Search payments…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
           </div>
-          <select className="input h-9 w-auto text-sm" value={sort} onChange={(e) => setSort(e.target.value)}>
+          <select className="input h-9 w-full text-sm sm:w-auto" value={sort} onChange={(e) => setSort(e.target.value)}>
             {SORTS.map((s) => (
               <option key={s.key} value={s.key}>
                 {s.label}
