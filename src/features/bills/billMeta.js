@@ -12,6 +12,7 @@ export const kindMeta = (k) => KIND_META[k] ?? KIND_META.recurring
 
 export const FREQUENCIES = [
   { key: 'one_time', label: 'One time' },
+  { key: 'daily', label: 'Daily' },
   { key: 'weekly', label: 'Weekly' },
   { key: 'biweekly', label: 'Biweekly' },
   { key: 'monthly', label: 'Monthly' },
