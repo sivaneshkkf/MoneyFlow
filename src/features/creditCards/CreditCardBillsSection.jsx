@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { CreditCard, FileClock, Wallet } from 'lucide-react'
+import { CreditCard, FileClock, Wallet, CalendarClock } from 'lucide-react'
+import { lastDayOfMonth, addMonths, addDays, setDate, isAfter, startOfToday } from 'date-fns'
 import { Badge, Skeleton } from '../../components/common'
 import Modal from '../../components/common/Modal'
 import { formatCurrency, formatDate } from '../../utils/format'
@@ -19,6 +20,24 @@ function outstandingOf(account) {
 }
 function creditLimitOf(account) {
   return Number(account.metadata?.credit_limit ?? 0)
+}
+
+// Display-only preview of the next automatic statement — the database
+// (credit_card_statement_date() in 042) is the real authority; this just
+// mirrors its clamp-to-last-valid-day logic in JS so the UI can show
+// "Next statement" before the daily cron has actually generated it yet.
+function clampToMonth(date, day) {
+  const last = lastDayOfMonth(date).getDate()
+  return setDate(date, Math.min(day, last))
+}
+function nextStatementPreview(account) {
+  const day = Number(account.metadata?.statement_day)
+  if (!day || day < 1 || day > 31) return null
+  const dueDays = Number(account.metadata?.due_days_after_statement ?? 15)
+  const today = startOfToday()
+  let statementDate = clampToMonth(today, day)
+  if (!isAfter(statementDate, today)) statementDate = clampToMonth(addMonths(today, 1), day)
+  return { statementDate, dueDate: addDays(statementDate, dueDays) }
 }
 
 /**
@@ -50,6 +69,7 @@ export default function CreditCardBillsSection() {
           const due = statement ? Math.max(0, Number(statement.statement_amount) - Number(statement.paid_amount)) : null
           const sm = statement ? STATUS_META[statement.status] : null
           const overdue = statement && statement.status !== 'paid' && statement.due_date < formatDate(new Date(), 'yyyy-MM-dd')
+          const nextPreview = nextStatementPreview(account)
 
           return (
             <div key={account.id} className="card flex flex-col gap-3 p-4">
@@ -87,6 +107,13 @@ export default function CreditCardBillsSection() {
                 <p className="text-xs text-ink-soft">
                   Due {formatDate(statement.due_date)}
                   {due > 0 && due < Number(statement.statement_amount) ? ` · ${formatCurrency(due)} remaining` : ''}
+                </p>
+              )}
+
+              {nextPreview && (
+                <p className="flex items-center gap-1 text-xs text-ink-soft">
+                  <CalendarClock className="h-3 w-3 shrink-0" />
+                  Next statement {formatDate(nextPreview.statementDate)} · due {formatDate(nextPreview.dueDate)}
                 </p>
               )}
 

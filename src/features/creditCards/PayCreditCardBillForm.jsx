@@ -34,6 +34,8 @@ export default function PayCreditCardBillForm({ card, statement, outstanding, on
   const { data: accounts = [] } = useAccounts()
   const sourceAccounts = accounts.filter((a) => !isCredit(a))
   const tokenRef = useRef(crypto.randomUUID())
+  const defaultSourceId = card.metadata?.default_payment_account_id
+  const defaultSourceValid = sourceAccounts.some((a) => a.id === defaultSourceId)
 
   const {
     register,
@@ -43,7 +45,7 @@ export default function PayCreditCardBillForm({ card, statement, outstanding, on
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      source_account_id: '',
+      source_account_id: defaultSourceValid ? defaultSourceId : '',
       amount: outstanding,
       payment_date: format(new Date(), 'yyyy-MM-dd'),
       notes: '',

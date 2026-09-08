@@ -3,8 +3,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Field, Select, TextInput, Textarea, MoneyInput } from '../../components/common/form'
 import { ACCOUNT_TYPES } from '../../constants'
-import { NETWORKS, BANK_SUBTYPES, CREDIT_PALETTES, DEBIT_PALETTES, typeKey, cardGradient } from './accountTheme'
-import { useAccountMutations } from './useAccounts'
+import { NETWORKS, BANK_SUBTYPES, CREDIT_PALETTES, DEBIT_PALETTES, typeKey, cardGradient, isCredit as isCreditAccount, accountOptionLabel } from './accountTheme'
+import { renderAccountOption } from './accountOption'
+import { useAccounts, useAccountMutations } from './useAccounts'
 import { useToast } from '../../components/common/ToastProvider'
 import { friendlyError } from '../../utils/errors'
 
@@ -32,6 +33,9 @@ const schema = z
     opening_balance: z.coerce.number().min(0, 'Cannot be negative').optional(),
     credit_limit: z.coerce.number().min(0, 'Cannot be negative').optional(),
     current_outstanding: z.coerce.number().min(0, 'Cannot be negative').optional(),
+    statement_day: z.coerce.number().int().min(1).max(31).optional().or(z.literal('')),
+    due_days_after_statement: z.coerce.number().int().min(0).max(60).optional().or(z.literal('')),
+    default_payment_account_id: z.string().optional().or(z.literal('')),
     currency: z.string().min(1),
     notes: z.string().max(400).optional().or(z.literal('')),
   })
@@ -43,6 +47,8 @@ const schema = z
 export default function AccountForm({ initial, onDone }) {
   const toast = useToast()
   const { create, update } = useAccountMutations()
+  const { data: allAccounts = [] } = useAccounts()
+  const paymentAccounts = allAccounts.filter((a) => !isCreditAccount(a) && a.id !== initial?.id)
   const editing = Boolean(initial?.id)
   const md = initial?.metadata ?? {}
 
@@ -69,6 +75,9 @@ export default function AccountForm({ initial, onDone }) {
       opening_balance: initial?.opening_balance ?? 0,
       credit_limit: md.credit_limit ?? '',
       current_outstanding: md.current_outstanding ?? '',
+      statement_day: md.statement_day ?? '',
+      due_days_after_statement: md.due_days_after_statement ?? 15,
+      default_payment_account_id: md.default_payment_account_id ?? '',
       currency: initial?.currency ?? 'INR',
       notes: md.notes ?? '',
     },
@@ -102,6 +111,9 @@ export default function AccountForm({ initial, onDone }) {
     put('theme', isCredit || isDebit ? v.theme : undefined)
     put('credit_limit', isCredit ? Number(v.credit_limit) || 0 : undefined)
     put('current_outstanding', isCredit ? Number(v.current_outstanding) || 0 : undefined)
+    put('statement_day', isCredit && v.statement_day ? Number(v.statement_day) : undefined)
+    put('due_days_after_statement', isCredit && v.statement_day ? Number(v.due_days_after_statement) || 15 : undefined)
+    put('default_payment_account_id', isCredit ? v.default_payment_account_id : undefined)
     put('notes', v.notes)
 
     const payload = {
@@ -282,6 +294,39 @@ export default function AccountForm({ initial, onDone }) {
           </Select>
         </Field>
       </div>
+
+      {isCredit && (
+        <div className="space-y-4 rounded-xl border border-line p-3 dark:border-white/10">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Statement &amp; billing (optional)
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field
+              label="Statement day"
+              error={errors.statement_day?.message}
+              hint="Day of the month your statement closes (e.g. 25). Leave blank to only generate statements manually."
+            >
+              <TextInput type="number" min="1" max="31" placeholder="e.g. 25" {...register('statement_day')} />
+            </Field>
+            <Field
+              label="Payment due — days after statement"
+              error={errors.due_days_after_statement?.message}
+            >
+              <TextInput type="number" min="0" max="60" {...register('due_days_after_statement')} />
+            </Field>
+          </div>
+          <Field label="Default payment account (optional)" error={errors.default_payment_account_id?.message}>
+            <Select renderOption={renderAccountOption(paymentAccounts)} {...register('default_payment_account_id')}>
+              <option value="">None</option>
+              {paymentAccounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {accountOptionLabel(a)}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </div>
+      )}
 
       <Field label="Notes">
         <Textarea placeholder="Optional" {...register('notes')} />

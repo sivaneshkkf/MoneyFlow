@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { format, startOfMonth, subMonths } from 'date-fns'
+import { format, startOfMonth, endOfMonth, subMonths, addDays } from 'date-fns'
 import { Field, TextInput } from '../../components/common/form'
 import { accountOptionLabel } from '../accounts/accountTheme'
 import { useCreditCardMutations } from './useCreditCards'
@@ -24,18 +24,22 @@ const schema = z
   })
 
 /**
- * Manual fallback (no cron in this app for this yet — see the RPC comment)
- * for pulling a card's real transactions for a billing period into one
- * statement. Same idempotency the RPC enforces: generating the same
- * card + period twice just returns the existing statement, never a
+ * Manual fallback alongside automatic generation (see the daily-cron-driven
+ * generate_due_credit_card_statements_all() in 042) — same underlying
+ * insert logic either way, so this can never diverge from what the
+ * scheduler produces. Same idempotency the RPC enforces: generating the
+ * same card + period twice just returns the existing statement, never a
  * duplicate — this form doesn't need to guard against it itself.
+ *
+ * period_end is INCLUSIVE (a "26 Aug – 25 Sep" statement counts the 25 Sep
+ * purchase) — defaults to last full calendar month accordingly.
  */
 export default function GenerateStatementForm({ card, onDone }) {
   const toast = useToast()
   const { generateStatement } = useCreditCardMutations()
 
   const lastMonthStart = startOfMonth(subMonths(new Date(), 1))
-  const thisMonthStart = startOfMonth(new Date())
+  const lastMonthEnd = endOfMonth(subMonths(new Date(), 1))
 
   const {
     register,
@@ -45,8 +49,8 @@ export default function GenerateStatementForm({ card, onDone }) {
     resolver: zodResolver(schema),
     defaultValues: {
       period_start: format(lastMonthStart, 'yyyy-MM-dd'),
-      period_end: format(thisMonthStart, 'yyyy-MM-dd'),
-      due_date: format(new Date(thisMonthStart.getTime() + 15 * 86400000), 'yyyy-MM-dd'),
+      period_end: format(lastMonthEnd, 'yyyy-MM-dd'),
+      due_date: format(addDays(lastMonthEnd, 15), 'yyyy-MM-dd'),
     },
   })
 
