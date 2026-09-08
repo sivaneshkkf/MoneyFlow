@@ -18,6 +18,7 @@ import { useLendingRecord, useLendingMutations, useRefreshLendingStatus } from '
 import LendingForm from './LendingForm'
 import RepaymentForm from './RepaymentForm'
 import InstallmentSchedule from './InstallmentSchedule'
+import DeleteLendingDialog from './DeleteLendingDialog'
 import { loanScheduleSummary } from './schedule'
 import { STATUS_META } from './status'
 import { formatCurrency, formatDate } from '../../utils/format'
@@ -236,17 +237,37 @@ export default function LendingDetailPage() {
         />
       </Modal>
 
-      <ConfirmDialog
-        open={deleteRec}
-        onClose={() => setDeleteRec(false)}
-        onConfirm={() =>
-          act(() => remove.mutateAsync(record.id), 'Lending record deleted.').then(() => navigate('/lending/given'))
-        }
-        title="Delete lending record?"
-        message="Removes the record, its repayments and installment schedule. All cash movements are reversed — the principal lent is returned to the source account, repayments received are taken back out of their accounts, and any interest income is removed."
-        confirmLabel="Delete"
-        loading={remove.isPending}
-      />
+      {sched.paid > 0 ? (
+        <DeleteLendingDialog
+          open={deleteRec}
+          onClose={() => setDeleteRec(false)}
+          loading={remove.isPending || update.isPending}
+          onWriteOff={() =>
+            act(() => update.mutateAsync({ id: record.id, status: 'written_off' }), 'Marked as written off.').then(
+              () => setDeleteRec(false),
+            )
+          }
+          onDeleteAll={() =>
+            act(() => remove.mutateAsync(record.id), 'Lending record deleted.').then(() =>
+              navigate('/lending/given'),
+            )
+          }
+        />
+      ) : (
+        <ConfirmDialog
+          open={deleteRec}
+          onClose={() => setDeleteRec(false)}
+          onConfirm={() =>
+            act(() => remove.mutateAsync(record.id), 'Lending record deleted.').then(() =>
+              navigate('/lending/given'),
+            )
+          }
+          title="Delete lending record?"
+          message="Removes the record and its installment schedule. Nothing has been repaid yet, so there is nothing to keep."
+          confirmLabel="Delete"
+          loading={remove.isPending}
+        />
+      )}
       <ConfirmDialog
         open={Boolean(delRepay)}
         onClose={() => setDelRepay(null)}
