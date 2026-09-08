@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { format } from 'date-fns'
 import { Field, TextInput, Select, MoneyInput } from '../../components/common/form'
 import { renderAccountOption } from '../accounts/accountOption'
+import { renderCategoryOption } from '../categories/categoryOption'
 import { accountOptionLabel } from '../accounts/accountTheme'
 import { useAccounts } from '../accounts/useAccounts'
 import { useCategories } from '../categories/useCategories'
@@ -123,7 +124,7 @@ export default function PaymentForm({ occurrence, recurring, onDone }) {
       </div>
 
       <Field label={isEmi ? 'Interest expense category' : 'Category'}>
-        <Select {...register('category_id')}>
+        <Select renderOption={renderCategoryOption(categories ?? [])} {...register('category_id')}>
           <option value="">Select category</option>
           {(categories ?? []).map((c) => (
             <option key={c.id} value={c.id}>

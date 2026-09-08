@@ -20,6 +20,7 @@ import { useCategories } from '../categories/useCategories'
 import { useAccounts } from '../accounts/useAccounts'
 import { accountOptionLabel } from '../accounts/accountTheme'
 import { renderAccountOption } from '../accounts/accountOption'
+import { renderCategoryOption } from '../categories/categoryOption'
 import TransactionForm from './TransactionForm'
 import { formatCurrency, formatFriendlyDate, formatDate } from '../../utils/format'
 import { CategoryGlyph } from '../budgets/budgetUi'
@@ -148,7 +149,11 @@ export default function TransactionsView({ lockedType = null, title, subtitle, t
           <div className="mt-3 border-t border-line pt-3 dark:border-white/10">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
               <Field label="Category">
-                <Select value={filters.categoryId} onChange={(e) => setFilter({ categoryId: e.target.value })}>
+                <Select
+                  value={filters.categoryId}
+                  onChange={(e) => setFilter({ categoryId: e.target.value })}
+                  renderOption={renderCategoryOption(categories)}
+                >
                   <option value="">All</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>

@@ -5,6 +5,7 @@ import { useCategories } from '../categories/useCategories'
 import { useAccounts } from '../accounts/useAccounts'
 import { usePaymentMethods } from '../settings/usePaymentMethods'
 import { renderAccountOption } from '../accounts/accountOption'
+import { renderCategoryOption } from '../categories/categoryOption'
 import { accountOptionLabel } from '../accounts/accountTheme'
 import { useBillMutations } from './useBills'
 import { useToast } from '../../components/common/ToastProvider'
@@ -140,7 +141,7 @@ export default function BillForm({ initial, onDone }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={isEmi ? 'Interest expense category' : 'Category'}>
-          <Select {...register('category_id')}>
+          <Select renderOption={renderCategoryOption(categories ?? [])} {...register('category_id')}>
             <option value="">Select category</option>
             {(categories ?? []).map((c) => (
               <option key={c.id} value={c.id}>

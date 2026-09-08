@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Field, Select, Textarea, MoneyInput } from '../../components/common/form'
 import { useCategories } from '../categories/useCategories'
+import { renderCategoryOption } from '../categories/categoryOption'
 import { useBudgetMutations } from './useBudgets'
 import { useToast } from '../../components/common/ToastProvider'
 import { friendlyError } from '../../utils/errors'
@@ -56,7 +57,7 @@ export default function BudgetForm({ initial, year, month, existingCategoryIds =
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <Field label="Category" error={errors.category_id?.message}>
-        <Select {...register('category_id')} disabled={editing}>
+        <Select renderOption={renderCategoryOption(available)} {...register('category_id')} disabled={editing}>
           <option value="">Select category</option>
           {available.map((c) => (
             <option key={c.id} value={c.id}>

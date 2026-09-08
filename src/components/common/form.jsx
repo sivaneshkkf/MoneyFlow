@@ -300,8 +300,12 @@ export const Select = forwardRef(function Select(
           !disabled && 'cursor-pointer',
         )}
       >
-        <span className={clsx('truncate', showPlaceholder && 'text-ink-soft')}>
-          {selected?.label ?? options[0]?.label ?? ' '}
+        <span className={clsx('flex min-w-0 flex-1 items-center gap-2', showPlaceholder && 'text-ink-soft')}>
+          {renderOption && selected ? (
+            renderOption({ value: selected.value, label: selected.label, raw: selected.raw, selected: true })
+          ) : (
+            <span className="truncate">{selected?.label ?? options[0]?.label ?? ' '}</span>
+          )}
         </span>
         <ChevronDown className={clsx('h-4 w-4 shrink-0 text-ink-soft transition', open && 'rotate-180')} />
       </button>

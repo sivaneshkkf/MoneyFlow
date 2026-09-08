@@ -7,6 +7,7 @@ import { useCategories } from '../categories/useCategories'
 import { useAccounts } from '../accounts/useAccounts'
 import { accountOptionLabel } from '../accounts/accountTheme'
 import { renderAccountOption } from '../accounts/accountOption'
+import { renderCategoryOption } from '../categories/categoryOption'
 import { usePaymentMethods } from '../settings/usePaymentMethods'
 import { useTransactionMutations } from './useTransactions'
 import { useToast } from '../../components/common/ToastProvider'
@@ -83,7 +84,7 @@ export default function TransactionForm({ initial, lockedType, onDone }) {
       </div>
 
       <Field label="Category" error={errors.category_id?.message}>
-        <Select {...register('category_id')}>
+        <Select renderOption={renderCategoryOption(categories)} {...register('category_id')}>
           <option value="">Select category</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
