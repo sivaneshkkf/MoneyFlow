@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, CalendarClock, AlertTriangle, CircleCheck, Wallet } from 'lucide-react'
+import { Plus, Search, CalendarClock, AlertTriangle, CircleCheck, Wallet, ChevronRight } from 'lucide-react'
 import clsx from 'clsx'
 import { PageContainer, StatCard, Badge, EmptyState, Skeleton } from '../../components/common'
 import Modal from '../../components/common/Modal'
@@ -9,6 +9,7 @@ import { formatCurrency, formatDate } from '../../utils/format'
 import { useRecurringPayments, useBillsSummary, useProcessRecurring } from './useBills'
 import BillForm from './BillForm'
 import PaymentForm from './PaymentForm'
+import MonthlyPaymentsModal from './MonthlyPaymentsModal'
 import { FILTERS, SORTS, kindMeta, frequencyLabel, occurrenceDueLabel } from './billMeta'
 import { useSubscriptionLimits } from '../subscription/hooks/useSubscriptionLimits'
 import UpgradeModal from '../subscription/components/UpgradeModal'
@@ -21,6 +22,89 @@ const TONE_TEXT = {
   neutral: 'text-ink-soft',
 }
 
+// The everyday case: this definition has exactly one occurrence this month
+// (true for monthly/weekly/yearly bills, the vast majority) — same card as
+// always, unchanged.
+function OccurrenceCard({ d, o, onPay }) {
+  const isPaid = o.status === 'paid'
+  const due = occurrenceDueLabel(o.due_date, o.status)
+  const meta = kindMeta(d.kind)
+  return (
+    <div className={clsx('card flex flex-col gap-3 p-4', isPaid && 'opacity-75')}>
+      <div className="flex items-start gap-3">
+        <span
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+          style={{ background: `${d.category?.color ?? meta.color}1f`, color: d.category?.color ?? meta.color }}
+        >
+          {d.category?.icon ? <CategoryIcon name={d.category.icon} size={18} /> : <meta.icon className="h-5 w-5" />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <Link to={`/bills/${d.id}`} className="truncate text-sm font-bold hover:underline">
+            {d.displayName}
+          </Link>
+          <p className="text-xs text-ink-soft">{isPaid ? `Paid ${formatDate(o.paid_at)}` : formatDate(o.due_date)}</p>
+        </div>
+        {due && <Badge tone={due.tone}>{due.text}</Badge>}
+      </div>
+      <p className="text-lg font-bold">{formatCurrency(isPaid ? o.paid_amount || o.scheduled_amount : o.scheduled_amount)}</p>
+      {isPaid ? (
+        <span className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-success/10 py-2 text-sm font-semibold text-success">
+          <CircleCheck className="h-4 w-4" /> Paid
+        </span>
+      ) : (
+        <button className="btn-primary w-full !py-2 text-sm" onClick={() => onPay(o)}>
+          Mark as paid
+        </button>
+      )}
+    </div>
+  )
+}
+
+// A high-frequency definition (daily, most often) can have dozens of
+// occurrences in one month — one summary card instead of flooding the grid,
+// "View all" opens MonthlyPaymentsModal with the full pending/paid list.
+function MonthGroupCard({ d, occurrences, onOpen }) {
+  const meta = kindMeta(d.kind)
+  const pending = occurrences.filter((o) => o.status !== 'paid')
+  const paidCount = occurrences.length - pending.length
+  const pendingTotal = pending.reduce((sum, o) => sum + Number(o.scheduled_amount), 0)
+  const next = pending[0]
+  const due = next ? occurrenceDueLabel(next.due_date, next.status) : null
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="card group flex flex-col gap-3 p-4 text-left transition hover:border-brand-400 dark:hover:border-brand-400/60"
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+          style={{ background: `${d.category?.color ?? meta.color}1f`, color: d.category?.color ?? meta.color }}
+        >
+          {d.category?.icon ? <CategoryIcon name={d.category.icon} size={18} /> : <meta.icon className="h-5 w-5" />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold">{d.displayName}</p>
+          <p className="text-xs text-ink-soft">
+            {frequencyLabel(d.frequency)} · {occurrences.length} payments this month
+          </p>
+        </div>
+        {due && <Badge tone={due.tone}>{due.text}</Badge>}
+      </div>
+      <div>
+        <p className="text-lg font-bold">{formatCurrency(pendingTotal)}</p>
+        <p className="text-xs text-ink-soft">
+          {pending.length} pending{paidCount > 0 ? ` · ${paidCount} paid` : ''}
+        </p>
+      </div>
+      <span className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-line py-2 text-sm font-semibold text-ink-soft transition group-hover:text-ink dark:border-white/10">
+        View all <ChevronRight className="h-3.5 w-3.5" />
+      </span>
+    </button>
+  )
+}
+
 export default function BillsPage() {
   useProcessRecurring()
   const { data: defs, isLoading } = useRecurringPayments()
@@ -29,6 +113,7 @@ export default function BillsPage() {
   const [addOpen, setAddOpen] = useState(false)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
   const [pay, setPay] = useState(null) // { occurrence, def }
+  const [monthGroupOpen, setMonthGroupOpen] = useState(null) // { def, occurrences }
   const [filter, setFilter] = useState('all')
   const [sort, setSort] = useState('next_due')
   const [q, setQ] = useState('')
@@ -42,28 +127,46 @@ export default function BillsPage() {
     setAddOpen(true)
   }
 
-  const upcoming = useMemo(() => {
+  // One entry per recurring definition — a daily (or otherwise
+  // high-frequency) item can have dozens of occurrences in a single month,
+  // which would otherwise flood this grid with near-identical cards. Each
+  // group carries every one of that definition's occurrences for the
+  // month (sorted, unpaid first); the card itself only shows a summary,
+  // with "View all" opening the full list (MonthlyPaymentsModal).
+  const upcomingGroups = useMemo(() => {
     const now = new Date()
     const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}` // yyyy-MM
-    const rows = []
+    const groups = []
     for (const d of defs ?? []) {
+      const occurrences = []
       for (const o of d.openOccurrences) {
         if (d.status !== 'active') continue
         // Current calendar month only — plus anything already overdue so it is never hidden.
-        if (o.due_date.slice(0, 7) === monthKey || o.status === 'overdue') {
-          rows.push({ occurrence: o, def: d })
-        }
+        if (o.due_date.slice(0, 7) === monthKey || o.status === 'overdue') occurrences.push(o)
       }
       // payments already made this month
-      for (const o of d.paidThisMonth ?? []) rows.push({ occurrence: o, def: d })
-    }
-    return rows
-      .sort((a, b) => {
-        const ap = a.occurrence.status === 'paid'
-        const bp = b.occurrence.status === 'paid'
+      for (const o of d.paidThisMonth ?? []) occurrences.push(o)
+      if (occurrences.length === 0) continue
+
+      occurrences.sort((a, b) => {
+        const ap = a.status === 'paid'
+        const bp = b.status === 'paid'
         if (ap !== bp) return ap ? 1 : -1 // unpaid first
-        const ad = ap ? a.occurrence.paid_at : a.occurrence.due_date
-        const bd = bp ? b.occurrence.paid_at : b.occurrence.due_date
+        const ad = ap ? a.paid_at : a.due_date
+        const bd = bp ? b.paid_at : b.due_date
+        return String(ad).localeCompare(String(bd))
+      })
+      groups.push({ def: d, occurrences })
+    }
+    return groups
+      .sort((a, b) => {
+        const af = a.occurrences[0]
+        const bf = b.occurrences[0]
+        const ap = af.status === 'paid'
+        const bp = bf.status === 'paid'
+        if (ap !== bp) return ap ? 1 : -1
+        const ad = ap ? af.paid_at : af.due_date
+        const bd = bp ? bf.paid_at : bf.due_date
         return String(ad).localeCompare(String(bd))
       })
       .slice(0, 18)
@@ -127,48 +230,27 @@ export default function BillsPage() {
         <h2 className="mb-3 text-base font-bold">This month&apos;s payments</h2>
         {isLoading ? (
           <Skeleton className="h-32 w-full" />
-        ) : upcoming.length === 0 ? (
+        ) : upcomingGroups.length === 0 ? (
           <div className="card px-6 py-10 text-center text-sm text-ink-soft">You&apos;re all caught up 🎉</div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {upcoming.map(({ occurrence: o, def: d }) => {
-              const isPaid = o.status === 'paid'
-              const due = occurrenceDueLabel(o.due_date, o.status)
-              const meta = kindMeta(d.kind)
-              return (
-                <div key={o.id} className={clsx('card flex flex-col gap-3 p-4', isPaid && 'opacity-75')}>
-                  <div className="flex items-start gap-3">
-                    <span
-                      className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
-                      style={{ background: `${d.category?.color ?? meta.color}1f`, color: d.category?.color ?? meta.color }}
-                    >
-                      {d.category?.icon ? <CategoryIcon name={d.category.icon} size={18} /> : <meta.icon className="h-5 w-5" />}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <Link to={`/bills/${d.id}`} className="truncate text-sm font-bold hover:underline">
-                        {d.displayName}
-                      </Link>
-                      <p className="text-xs text-ink-soft">
-                        {isPaid ? `Paid ${formatDate(o.paid_at)}` : formatDate(o.due_date)}
-                      </p>
-                    </div>
-                    {due && <Badge tone={due.tone}>{due.text}</Badge>}
-                  </div>
-                  <p className="text-lg font-bold">
-                    {formatCurrency(isPaid ? o.paid_amount || o.scheduled_amount : o.scheduled_amount)}
-                  </p>
-                  {isPaid ? (
-                    <span className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-success/10 py-2 text-sm font-semibold text-success">
-                      <CircleCheck className="h-4 w-4" /> Paid
-                    </span>
-                  ) : (
-                    <button className="btn-primary w-full !py-2 text-sm" onClick={() => setPay({ occurrence: o, def: d })}>
-                      Mark as paid
-                    </button>
-                  )}
-                </div>
-              )
-            })}
+            {upcomingGroups.map(({ def: d, occurrences }) =>
+              occurrences.length === 1 ? (
+                <OccurrenceCard
+                  key={d.id}
+                  d={d}
+                  o={occurrences[0]}
+                  onPay={(o) => setPay({ occurrence: o, def: d })}
+                />
+              ) : (
+                <MonthGroupCard
+                  key={d.id}
+                  d={d}
+                  occurrences={occurrences}
+                  onOpen={() => setMonthGroupOpen({ def: d, occurrences })}
+                />
+              ),
+            )}
           </div>
         )}
       </div>
@@ -271,6 +353,16 @@ export default function BillsPage() {
       <Modal open={Boolean(pay)} onClose={() => setPay(null)} title="Record payment">
         {pay && <PaymentForm occurrence={pay.occurrence} recurring={pay.def} onDone={() => setPay(null)} />}
       </Modal>
+      <MonthlyPaymentsModal
+        def={monthGroupOpen?.def}
+        occurrences={monthGroupOpen?.occurrences ?? []}
+        onClose={() => setMonthGroupOpen(null)}
+        onPay={(o) => {
+          const def = monthGroupOpen?.def
+          setMonthGroupOpen(null)
+          setPay({ occurrence: o, def })
+        }}
+      />
       <UpgradeModal
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
