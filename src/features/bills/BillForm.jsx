@@ -56,6 +56,7 @@ export default function BillForm({ initial, onDone }) {
       original_principal: initial?.liability?.original_principal ?? '',
       interest_rate: initial?.liability?.interest_rate ?? '',
       installments_total: initial?.liability?.installments_total ?? '',
+      already_paid: 0,
       emi_principal: initial?.emi_principal ?? '',
       emi_interest: initial?.emi_interest ?? '',
     },
@@ -64,6 +65,7 @@ export default function BillForm({ initial, onDone }) {
   const kind = watch('kind')
   const frequency = watch('frequency')
   const isEmi = kind === 'emi'
+  const installmentsTotal = Number(watch('installments_total')) || 0
 
   const onSubmit = async (v) => {
     if (!v.name.trim()) return
@@ -97,6 +99,8 @@ export default function BillForm({ initial, onDone }) {
         original_principal: Number(v.original_principal || 0),
         interest_rate: Number(v.interest_rate || 0),
         installments_total: Number(v.installments_total || 0),
+        // Only meaningful on create — see the "Already paid" field below.
+        already_paid: editing ? 0 : Math.min(Number(v.already_paid || 0), Number(v.installments_total || 0)),
       }
     }
     try {
@@ -222,6 +226,19 @@ export default function BillForm({ initial, onDone }) {
             <Field label="Total installments">
               <TextInput type="number" min="0" {...register('installments_total')} disabled={editing} />
             </Field>
+            {!editing && (
+              <Field
+                label="Already paid (optional)"
+                hint="Installments paid outside the app, before adding this loan here. They'll show as Paid in the schedule and won't touch your account balance or create transactions."
+              >
+                <TextInput
+                  type="number"
+                  min="0"
+                  max={installmentsTotal || undefined}
+                  {...register('already_paid')}
+                />
+              </Field>
+            )}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Fixed principal / EMI (optional)" hint="Leave blank to use the rate above.">

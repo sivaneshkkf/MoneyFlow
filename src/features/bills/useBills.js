@@ -218,6 +218,16 @@ export function useBillMutations() {
         .single()
       if (error) throw error
       await generate(data.id)
+      // Installments already paid outside the app, before this loan was
+      // entered here — flip them to paid without touching the account
+      // balance or creating transactions (see mark_emi_already_paid()).
+      if (values.kind === 'emi' && emi?.already_paid > 0) {
+        const { error: pe } = await supabase.rpc('mark_emi_already_paid', {
+          p_recurring: data.id,
+          p_count: emi.already_paid,
+        })
+        if (pe) throw pe
+      }
       return data
     },
     onSuccess: invalidate,
