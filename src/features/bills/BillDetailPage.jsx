@@ -13,6 +13,7 @@ import { friendlyError } from '../../utils/errors'
 import { useRecurringPayment, useBillMutations } from './useBills'
 import BillForm from './BillForm'
 import PaymentForm from './PaymentForm'
+import PaymentScheduleTimeline from './PaymentScheduleTimeline'
 import { kindMeta, frequencyLabel, occurrenceDueLabel, OCC_STATUS_META } from './billMeta'
 
 export default function BillDetailPage() {
@@ -168,40 +169,44 @@ export default function BillDetailPage() {
       </div>
 
       {/* Schedule */}
-      <div className="card mb-6 p-5">
-        <h2 className="mb-4 text-base font-semibold">{isEmi ? 'Payment schedule' : 'Upcoming occurrences'}</h2>
-        {openOcc.length === 0 ? (
-          <p className="py-6 text-center text-sm text-ink-soft">No upcoming payments.</p>
-        ) : (
-          <ul className="divide-y divide-line dark:divide-white/5">
-            {openOcc.slice(0, 24).map((o) => {
-              const due = occurrenceDueLabel(o.due_date, o.status)
-              return (
-                <li key={o.id} className="flex flex-wrap items-center gap-3 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold">
-                      {o.installment_number ? `#${o.installment_number} · ` : ''}
-                      {formatDate(o.due_date)}
-                    </p>
-                    <p className="text-xs text-ink-soft">
-                      {formatCurrency(o.scheduled_amount)}
-                      {isEmi
-                        ? ` · principal ${formatCurrency(o.principal_amount)} · interest ${formatCurrency(o.interest_amount)}`
-                        : ''}
-                    </p>
-                  </div>
-                  {due && <Badge tone={due.tone}>{due.text}</Badge>}
-                  {!ended && (
-                    <button className="btn-primary !py-1.5 text-xs" onClick={() => setPayOcc(o)}>
-                      Mark as paid
-                    </button>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </div>
+      {isEmi ? (
+        <PaymentScheduleTimeline
+          occurrences={rec.occurrences ?? []}
+          ended={ended}
+          onRecordPayment={setPayOcc}
+          onSkip={(occ) => act(() => skip.mutateAsync(occ.id), 'Payment skipped.')}
+        />
+      ) : (
+        <div className="card mb-6 p-5">
+          <h2 className="mb-4 text-base font-semibold">Upcoming occurrences</h2>
+          {openOcc.length === 0 ? (
+            <p className="py-6 text-center text-sm text-ink-soft">No upcoming payments.</p>
+          ) : (
+            <ul className="divide-y divide-line dark:divide-white/5">
+              {openOcc.slice(0, 24).map((o) => {
+                const due = occurrenceDueLabel(o.due_date, o.status)
+                return (
+                  <li key={o.id} className="flex flex-wrap items-center gap-3 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold">
+                        {o.installment_number ? `#${o.installment_number} · ` : ''}
+                        {formatDate(o.due_date)}
+                      </p>
+                      <p className="text-xs text-ink-soft">{formatCurrency(o.scheduled_amount)}</p>
+                    </div>
+                    {due && <Badge tone={due.tone}>{due.text}</Badge>}
+                    {!ended && (
+                      <button className="btn-primary !py-1.5 text-xs" onClick={() => setPayOcc(o)}>
+                        Mark as paid
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* History */}
       <div className="card p-5">
