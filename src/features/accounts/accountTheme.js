@@ -188,5 +188,18 @@ export function accountOptionLabel(a) {
   return a.last_four_digits ? `${base} ••${a.last_four_digits}` : base
 }
 
+/**
+ * Compact label for an "Account" column in a table row: "SIVA-AXIS-...0789"
+ * — first 4 letters of the account name, the bank/institution, and the
+ * last 4 digits, dash-separated. Falls back gracefully when a part is
+ * missing (e.g. no institution set, or a non-card account with no digits).
+ */
+export function accountTableLabel(a) {
+  if (!a) return '—'
+  const namePart = (a.name || '').replace(/\s+/g, '').slice(0, 4).toUpperCase()
+  const parts = [namePart, a.institution || '', a.last_four_digits ? `...${a.last_four_digits}` : '']
+  return parts.filter(Boolean).join('-') || a.name || '—'
+}
+
 export const NETWORKS = ['Visa', 'Mastercard', 'RuPay', 'Amex', 'Other']
 export const BANK_SUBTYPES = ['Savings', 'Current', 'Salary', 'Other']

@@ -238,7 +238,9 @@ export function useReceivedRepayments({ from, to } = {}) {
     queryFn: async () => {
       let q = supabase
         .from('lending_repayments')
-        .select('*, account:accounts(name), payment_method:payment_methods(name), record:lending_records(borrower_name)')
+        .select(
+          '*, account:accounts(name,institution,last_four_digits), payment_method:payment_methods(name), record:lending_records(borrower_name)',
+        )
         .order('payment_date', { ascending: false })
       if (from) q = q.gte('payment_date', from)
       if (to) q = q.lte('payment_date', to)

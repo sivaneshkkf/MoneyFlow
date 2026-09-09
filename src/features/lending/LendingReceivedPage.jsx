@@ -33,6 +33,7 @@ import {
   useLendingMutations,
 } from "./useLending";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { accountTableLabel } from "../accounts/accountTheme";
 import { downloadCSV } from "../../utils/csv";
 import { useToast } from "../../components/common/ToastProvider";
 import { friendlyError } from "../../utils/errors";
@@ -394,7 +395,7 @@ export default function LendingReceivedPage() {
                               {formatCurrency(r.amount)}
                             </td>
                             <td className="px-5 py-3.5 text-ink-soft">
-                              {r.account?.name ?? "—"}
+                              {accountTableLabel(r.account)}
                             </td>
                             <td className="px-5 py-3.5">
                               <div className="flex justify-end">

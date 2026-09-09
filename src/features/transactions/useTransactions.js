@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../auth/AuthProvider'
 
 const SELECT =
-  '*, category:categories(id,name,color,icon,type), account:accounts(id,name), payment_method:payment_methods(id,name)'
+  '*, category:categories(id,name,color,icon,type), account:accounts(id,name,institution,last_four_digits,type), payment_method:payment_methods(id,name)'
 
 export function useTransactions(filters = {}) {
   const { user } = useAuth()

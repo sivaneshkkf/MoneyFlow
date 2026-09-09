@@ -18,7 +18,7 @@ import { Field, Select, TextInput } from '../../components/common/form'
 import { useTransactions, useTransactionMutations } from './useTransactions'
 import { useCategories } from '../categories/useCategories'
 import { useAccounts } from '../accounts/useAccounts'
-import { accountOptionLabel } from '../accounts/accountTheme'
+import { accountOptionLabel, accountTableLabel } from '../accounts/accountTheme'
 import { renderAccountOption } from '../accounts/accountOption'
 import { renderCategoryOption } from '../categories/categoryOption'
 import TransactionForm from './TransactionForm'
@@ -288,7 +288,7 @@ export default function TransactionsView({ lockedType = null, title, subtitle, t
                             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-400/12 text-brand-700 dark:text-brand-400">
                               <Landmark className="h-3.5 w-3.5" />
                             </span>
-                            <span className="truncate font-medium">{t.account.name}</span>
+                            <span className="truncate font-medium">{accountTableLabel(t.account)}</span>
                           </div>
                         ) : (
                           <span className="text-ink-soft">—</span>
