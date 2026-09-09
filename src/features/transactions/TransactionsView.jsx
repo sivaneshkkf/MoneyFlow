@@ -220,119 +220,121 @@ export default function TransactionsView({ lockedType = null, title, subtitle, t
         <>
           {/* Desktop table */}
           <div className="card hidden overflow-hidden md:block">
-            <table className="w-full text-sm">
-              <thead className="border-b border-line text-left text-[11px] font-semibold uppercase tracking-wider text-ink-soft dark:border-white/10">
-                <tr>
-                  <th className="px-5 py-3.5">Description</th>
-                  <th className="px-5 py-3.5">Category</th>
-                  <th className="px-5 py-3.5">Date</th>
-                  <th className="px-5 py-3.5">Account</th>
-                  <th className="px-5 py-3.5 text-right">Amount</th>
-                  <th className="px-5 py-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((t) => {
-                  const income = t.type === 'income'
-                  const color = t.category?.color ?? '#7C9B95'
-                  return (
-                    <tr key={t.id} className="border-b border-line transition last:border-0 hover:bg-brand-50/40 dark:border-white/5 dark:hover:bg-white/[0.03]">
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${
-                              income ? 'bg-success/12 text-success' : 'bg-danger/12 text-danger'
-                            }`}
-                          >
-                            {income ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold">
-                              {t.description || 'Untitled'}
-                              {t.source === 'lending_interest' && (
-                                <Badge tone="info">Interest</Badge>
-                              )}
-                              {t.source === 'loan_emi_payment' && <Badge tone="neutral">EMI</Badge>}
-                            </p>
-                            {t.source === 'loan_emi_payment' && t.expense_amount != null ? (
-                              <p className="truncate text-xs text-ink-soft">
-                                Principal {formatCurrency(Number(t.amount) - Number(t.expense_amount))} · Interest{' '}
-                                {formatCurrency(t.expense_amount)}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[820px] text-sm">
+                <thead className="border-b border-line text-left text-[11px] font-semibold uppercase tracking-wider text-ink-soft dark:border-white/10">
+                  <tr>
+                    <th className="px-5 py-3.5">Description</th>
+                    <th className="px-5 py-3.5">Category</th>
+                    <th className="px-5 py-3.5">Date</th>
+                    <th className="px-5 py-3.5">Account</th>
+                    <th className="px-5 py-3.5 text-right">Amount</th>
+                    <th className="px-5 py-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((t) => {
+                    const income = t.type === 'income'
+                    const color = t.category?.color ?? '#7C9B95'
+                    return (
+                      <tr key={t.id} className="border-b border-line transition last:border-0 hover:bg-brand-50/40 dark:border-white/5 dark:hover:bg-white/[0.03]">
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${
+                                income ? 'bg-success/12 text-success' : 'bg-danger/12 text-danger'
+                              }`}
+                            >
+                              {income ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="truncate font-semibold">
+                                {t.description || 'Untitled'}
+                                {t.source === 'lending_interest' && (
+                                  <Badge tone="info">Interest</Badge>
+                                )}
+                                {t.source === 'loan_emi_payment' && <Badge tone="neutral">EMI</Badge>}
                               </p>
+                              {t.source === 'loan_emi_payment' && t.expense_amount != null ? (
+                                <p className="truncate text-xs text-ink-soft">
+                                  Principal {formatCurrency(Number(t.amount) - Number(t.expense_amount))} · Interest{' '}
+                                  {formatCurrency(t.expense_amount)}
+                                </p>
+                              ) : (
+                                t.notes && <p className="truncate text-xs text-ink-soft">{t.notes}</p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {t.category ? (
+                            <span
+                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+                              style={{ background: `${color}1a`, color }}
+                            >
+                              <CategoryGlyph name={t.category.icon} className="h-3 w-3" />
+                              {t.category.name}
+                            </span>
+                          ) : (
+                            <span className="text-ink-soft">—</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <p className="font-medium">{formatFriendlyDate(t.transaction_date)}</p>
+                          <p className="text-xs text-ink-soft">{formatDate(t.transaction_date, 'dd MMM yyyy')}</p>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {t.account ? (
+                            <div className="flex items-center gap-2">
+                              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-400/12 text-brand-700 dark:text-brand-400">
+                                <Landmark className="h-3.5 w-3.5" />
+                              </span>
+                              <span className="truncate font-medium">{accountTableLabel(t.account)}</span>
+                            </div>
+                          ) : (
+                            <span className="text-ink-soft">—</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          <p className={`font-bold ${income ? 'text-success' : 'text-danger'}`}>
+                            {income ? '+' : '−'}
+                            {formatCurrency(t.amount)}
+                          </p>
+                          <p className="text-xs capitalize text-ink-soft">{t.type}</p>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex justify-end gap-1.5">
+                            {t.source === 'manual' ? (
+                              <>
+                                <button
+                                  className="grid h-8 w-8 place-items-center rounded-lg border border-line text-ink-soft transition hover:bg-brand-50 hover:text-ink dark:border-white/10 dark:hover:bg-white/5"
+                                  onClick={() => {
+                                    setEditing(t)
+                                    setFormOpen(true)
+                                  }}
+                                  aria-label="Edit"
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  className="grid h-8 w-8 place-items-center rounded-lg border border-danger/25 text-danger transition hover:bg-danger/10"
+                                  onClick={() => setDeleting(t)}
+                                  aria-label="Delete"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </>
                             ) : (
-                              t.notes && <p className="truncate text-xs text-ink-soft">{t.notes}</p>
+                              <span className="text-xs text-ink-soft">Auto</span>
                             )}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {t.category ? (
-                          <span
-                            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
-                            style={{ background: `${color}1a`, color }}
-                          >
-                            <CategoryGlyph name={t.category.icon} className="h-3 w-3" />
-                            {t.category.name}
-                          </span>
-                        ) : (
-                          <span className="text-ink-soft">—</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <p className="font-medium">{formatFriendlyDate(t.transaction_date)}</p>
-                        <p className="text-xs text-ink-soft">{formatDate(t.transaction_date, 'dd MMM yyyy')}</p>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {t.account ? (
-                          <div className="flex items-center gap-2">
-                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-400/12 text-brand-700 dark:text-brand-400">
-                              <Landmark className="h-3.5 w-3.5" />
-                            </span>
-                            <span className="truncate font-medium">{accountTableLabel(t.account)}</span>
-                          </div>
-                        ) : (
-                          <span className="text-ink-soft">—</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                        <p className={`font-bold ${income ? 'text-success' : 'text-danger'}`}>
-                          {income ? '+' : '−'}
-                          {formatCurrency(t.amount)}
-                        </p>
-                        <p className="text-xs capitalize text-ink-soft">{t.type}</p>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex justify-end gap-1.5">
-                          {t.source === 'manual' ? (
-                            <>
-                              <button
-                                className="grid h-8 w-8 place-items-center rounded-lg border border-line text-ink-soft transition hover:bg-brand-50 hover:text-ink dark:border-white/10 dark:hover:bg-white/5"
-                                onClick={() => {
-                                  setEditing(t)
-                                  setFormOpen(true)
-                                }}
-                                aria-label="Edit"
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                className="grid h-8 w-8 place-items-center rounded-lg border border-danger/25 text-danger transition hover:bg-danger/10"
-                                onClick={() => setDeleting(t)}
-                                aria-label="Delete"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </>
-                          ) : (
-                            <span className="text-xs text-ink-soft">Auto</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Mobile cards */}
