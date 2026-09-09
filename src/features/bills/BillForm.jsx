@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { format } from 'date-fns'
 import { Field, TextInput, Textarea, Select, MoneyInput } from '../../components/common/form'
@@ -6,8 +7,10 @@ import { useAccounts } from '../accounts/useAccounts'
 import { usePaymentMethods } from '../settings/usePaymentMethods'
 import { renderAccountOption } from '../accounts/accountOption'
 import { renderCategoryOption } from '../categories/categoryOption'
-import { accountOptionLabel } from '../accounts/accountTheme'
+import { accountOptionLabel, isCredit } from '../accounts/accountTheme'
 import { useBillMutations } from './useBills'
+import { useAccountMutations } from '../accounts/useAccounts'
+import { formatCurrency } from '../../utils/format'
 import { useToast } from '../../components/common/ToastProvider'
 import { friendlyError } from '../../utils/errors'
 import { FREQUENCIES, REMINDER_OPTIONS, WEEKDAYS, MONTHS, kindMeta } from './billMeta'
@@ -25,9 +28,14 @@ export default function BillForm({ initial, onDone }) {
   const editing = Boolean(initial?.id)
   const toast = useToast()
   const { create, update } = useBillMutations()
+  const { update: updateAccount } = useAccountMutations()
   const { data: categories } = useCategories('expense')
   const { data: accounts } = useAccounts()
   const { data: methods } = usePaymentMethods()
+  // Once any installment has actually moved money (charged to a card /
+  // debited from cash), switching the source account would silently orphan
+  // that history — lock it, same as original_principal/installments_total.
+  const sourceLocked = editing && Number(initial?.liability?.installments_paid ?? 0) > 0
 
   const {
     register,
@@ -71,6 +79,36 @@ export default function BillForm({ initial, onDone }) {
   const isEmi = kind === 'emi'
   const installmentsTotal = Number(watch('installments_total')) || 0
   const noEndDate = watch('no_end_date')
+
+  // Two account roles for a Credit Card EMI (see 043): the loan/EMI source
+  // (this form's account_id — charging it increases the card's own
+  // outstanding, per _record_liability_payment) vs. the EMI Payment
+  // Account, which isn't really per-EMI at all — a card only has one real
+  // bank account its bill actually gets paid from — so this reuses the
+  // card's own metadata.default_payment_account_id (already wired into the
+  // Pay Bill flow in PayCreditCardBillForm.jsx) rather than inventing a
+  // second, competing per-EMI field.
+  const sourceAccountId = watch('account_id')
+  const sourceAccount = (accounts ?? []).find((a) => a.id === sourceAccountId)
+  const sourceIsCredit = Boolean(sourceAccount) && isCredit(sourceAccount)
+  const paymentAccounts = (accounts ?? []).filter((a) => a.id !== sourceAccountId && !isCredit(a))
+  const [cardPaymentAccountId, setCardPaymentAccountId] = useState('')
+
+  useEffect(() => {
+    setCardPaymentAccountId(sourceIsCredit ? sourceAccount?.metadata?.default_payment_account_id ?? '' : '')
+  }, [sourceAccountId, sourceIsCredit, sourceAccount?.metadata?.default_payment_account_id])
+
+  const saveCardPaymentAccount = async (value) => {
+    setCardPaymentAccountId(value)
+    try {
+      await updateAccount.mutateAsync({
+        id: sourceAccount.id,
+        metadata: { ...(sourceAccount.metadata ?? {}), default_payment_account_id: value || undefined },
+      })
+    } catch (e) {
+      toast.error(friendlyError(e, "Couldn't save the card's payment account."))
+    }
+  }
 
   const onSubmit = async (v) => {
     if (!v.name.trim()) return
@@ -154,8 +192,21 @@ export default function BillForm({ initial, onDone }) {
             ))}
           </Select>
         </Field>
-        <Field label="Payment account">
-          <Select {...register('account_id')} renderOption={renderAccountOption(accounts ?? [])}>
+        <Field
+          label={isEmi ? 'Loan / EMI source account' : 'Payment account'}
+          hint={
+            sourceLocked
+              ? "Locked — installments have already been charged/paid, so the source can't change now."
+              : isEmi
+                ? 'Where this loan/EMI debt originates. A credit card here means installments are charged to that card, not debited as cash.'
+                : undefined
+          }
+        >
+          <Select
+            {...register('account_id')}
+            renderOption={renderAccountOption(accounts ?? [])}
+            disabled={sourceLocked}
+          >
             <option value="">Select account</option>
             {(accounts ?? []).map((a) => (
               <option key={a.id} value={a.id}>
@@ -165,6 +216,57 @@ export default function BillForm({ initial, onDone }) {
           </Select>
         </Field>
       </div>
+
+      {isEmi && sourceIsCredit && (
+        <div className="space-y-3 rounded-xl border border-warning/30 bg-warning/5 p-3">
+          <p className="text-xs text-ink">
+            <span className="font-semibold">Credit Card EMI:</span> each installment you mark paid adds to{' '}
+            {accountOptionLabel(sourceAccount)}&apos;s outstanding balance — it doesn&apos;t touch any cash account
+            directly. You pay it off separately, whenever you pay that card's bill (Bills &amp; Recurring → Credit
+            Card Bills).
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div>
+              <p className="text-[11px] text-ink-soft">Current outstanding</p>
+              <p className="text-sm font-bold">{formatCurrency(Number(sourceAccount.metadata?.current_outstanding ?? 0))}</p>
+            </div>
+            {Number(sourceAccount.metadata?.credit_limit ?? 0) > 0 && (
+              <>
+                <div>
+                  <p className="text-[11px] text-ink-soft">Credit limit</p>
+                  <p className="text-sm font-bold">{formatCurrency(Number(sourceAccount.metadata.credit_limit))}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-ink-soft">Available credit</p>
+                  <p className="text-sm font-bold">
+                    {formatCurrency(
+                      Math.max(0, Number(sourceAccount.metadata.credit_limit) - Number(sourceAccount.metadata?.current_outstanding ?? 0)),
+                    )}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+          <Field
+            label="EMI payment account"
+            hint={`Saved as ${accountOptionLabel(sourceAccount)}'s default account for paying its bill — shared across everything charged to this card, not just this EMI.`}
+          >
+            <Select
+              value={cardPaymentAccountId}
+              onChange={(e) => saveCardPaymentAccount(e.target.value)}
+              renderOption={renderAccountOption(paymentAccounts)}
+              disabled={updateAccount.isPending}
+            >
+              <option value="">None set</option>
+              {paymentAccounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {accountOptionLabel(a)}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Frequency">
