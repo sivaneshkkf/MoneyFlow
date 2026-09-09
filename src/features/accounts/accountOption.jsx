@@ -1,5 +1,5 @@
 import { Landmark, Banknote, Wallet, CreditCard, Ban, Boxes } from 'lucide-react'
-import { typeKey } from './accountTheme'
+import { typeKey, accountTableLabelParts } from './accountTheme'
 
 const TYPE_ICON = {
   bank: Landmark,
@@ -14,6 +14,31 @@ const TYPE_ICON = {
 export function AccountTypeIcon({ account, className = 'h-4 w-4' }) {
   const Icon = account ? TYPE_ICON[typeKey(account.type)] ?? Boxes : Ban
   return <Icon className={className} />
+}
+
+/**
+ * Compact label for an "Account" column in a table row: "SIVA-AXIS-●●●0789"
+ * — first 4 letters of the account name, the bank/institution, and the
+ * last 4 digits (masked), dash-separated. Falls back gracefully when a part
+ * is missing (e.g. no institution set, or a non-card account with no digits).
+ */
+export function accountTableLabel(a) {
+  const parts = accountTableLabelParts(a)
+  if (!parts) return '—'
+  const { namePart, institution, last4 } = parts
+  return (
+    <>
+      {namePart}
+      {namePart && institution && '-'}
+      {institution}
+      {last4 && (
+        <>
+          -<span className="text-black/50">●●●</span>
+          {last4}
+        </>
+      )}
+    </>
+  )
 }
 
 /**

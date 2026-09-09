@@ -33,7 +33,7 @@ import {
   useLendingMutations,
 } from "./useLending";
 import { formatCurrency, formatDate } from "../../utils/format";
-import { accountTableLabel } from "../accounts/accountTheme";
+import { accountTableLabel } from "../accounts/accountOption";
 import { downloadCSV } from "../../utils/csv";
 import { useToast } from "../../components/common/ToastProvider";
 import { friendlyError } from "../../utils/errors";
