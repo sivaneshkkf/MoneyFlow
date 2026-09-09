@@ -60,7 +60,7 @@ export function useBudgetCategoryTransactions(categoryId, year, month, enabled =
       const monthStart = new Date(year, month - 1, 1)
       const { data, error } = await supabase
         .from('transactions')
-        .select('id, amount, description, transaction_date, account:accounts(name)')
+        .select('id, amount, expense_amount, description, transaction_date, account:accounts(name)')
         .eq('type', 'expense')
         .eq('category_id', categoryId)
         .gte('transaction_date', d(startOfMonth(monthStart)))

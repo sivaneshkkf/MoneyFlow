@@ -93,7 +93,10 @@ export function useCashFlow(rangeKey = '30d') {
       const fromKey = d(monthly ? startOfMonth(from) : from)
 
       const [tx, lent, repaid, loanPaid] = await Promise.all([
-        supabase.from('transactions').select('type, amount, transaction_date').gte('transaction_date', fromKey),
+        supabase
+          .from('transactions')
+          .select('type, amount, expense_amount, transaction_date')
+          .gte('transaction_date', fromKey),
         supabase.from('lending_records').select('principal_amount, lending_date').gte('lending_date', fromKey),
         supabase
           .from('lending_repayments')
@@ -127,7 +130,7 @@ export function useCashFlow(rangeKey = '30d') {
       for (const t of tx.data ?? []) {
         const b = ensure(keyFor(t.transaction_date))
         if (t.type === 'income') b.income += Number(t.amount)
-        else b.expenses += Number(t.amount)
+        else b.expenses += Number(t.expense_amount ?? t.amount)
       }
       for (const r of lent.data ?? []) ensure(keyFor(r.lending_date)).moneyLent += Number(r.principal_amount)
       for (const r of loanPaid.data ?? [])
@@ -175,7 +178,7 @@ export function useSpendingBreakdown() {
         supabase.rpc('get_category_expense_summary', { p_from: from, p_to: to }),
         supabase
           .from('transactions')
-          .select('amount, transaction_date, category:categories(name)')
+          .select('amount, expense_amount, transaction_date, category:categories(name)')
           .eq('type', 'expense')
           .gte('transaction_date', from)
           .lte('transaction_date', to),
@@ -196,7 +199,7 @@ export function useSpendingBreakdown() {
         const name = r.category?.name ?? 'Uncategorized'
         const dow = new Date(r.transaction_date).getDay()
         grid[name] = grid[name] || Array(7).fill(0)
-        grid[name][dow] += Number(r.amount)
+        grid[name][dow] += Number(r.expense_amount ?? r.amount)
       }
       const heatmap = Object.entries(grid)
         .map(([name, cells]) => ({ name, cells, total: cells.reduce((a, b) => a + b, 0) }))

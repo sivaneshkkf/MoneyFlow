@@ -145,7 +145,7 @@ function BudgetRow({ row, year, month, onEdit, onDelete }) {
                         {t.description || 'Untitled'}
                         <span className="text-ink-soft"> · {formatDate(t.transaction_date, 'dd MMM')}</span>
                       </span>
-                      <span className="shrink-0 font-medium text-danger">−{formatCurrency(t.amount)}</span>
+                      <span className="shrink-0 font-medium text-danger">−{formatCurrency(t.expense_amount ?? t.amount)}</span>
                     </li>
                   ))}
                 </ul>

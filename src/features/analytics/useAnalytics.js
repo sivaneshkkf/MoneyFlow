@@ -17,7 +17,11 @@ const pctChange = (a, b) => (b > 0 ? ((a - b) / b) * 100 : a > 0 ? 100 : 0)
 
 async function windowTotals(fromKey, toKey) {
   const [tx, repaid] = await Promise.all([
-    supabase.from('transactions').select('type, amount').gte('transaction_date', fromKey).lte('transaction_date', toKey),
+    supabase
+      .from('transactions')
+      .select('type, amount, expense_amount')
+      .gte('transaction_date', fromKey)
+      .lte('transaction_date', toKey),
     supabase.from('lending_repayments').select('principal_amount').gte('payment_date', fromKey).lte('payment_date', toKey),
   ])
   if (tx.error) throw tx.error
@@ -26,7 +30,7 @@ async function windowTotals(fromKey, toKey) {
   let expenses = 0
   for (const t of tx.data ?? []) {
     if (t.type === 'income') income += Number(t.amount)
-    else expenses += Number(t.amount)
+    else expenses += Number(t.expense_amount ?? t.amount)
   }
   const principalReceived = (repaid.data ?? []).reduce((s, r) => s + Number(r.principal_amount), 0)
   const netSavings = income - expenses
@@ -58,7 +62,7 @@ export function useAnalytics(rangeKey = '3m', custom) {
       const [tx, lent, repaid, goals, prev] = await Promise.all([
         supabase
           .from('transactions')
-          .select('type, amount, transaction_date, category:categories(name,color)')
+          .select('type, amount, expense_amount, transaction_date, category:categories(name,color)')
           .gte('transaction_date', fromKey)
           .lte('transaction_date', toKey),
         supabase
@@ -95,7 +99,11 @@ export function useAnalytics(rangeKey = '3m', custom) {
       })
 
       for (const t of tx.data ?? []) {
-        const amt = Number(t.amount)
+        // income counts its full amount; expense counts only expense_amount
+        // when set (an EMI payment's interest slice, not its full cash
+        // movement) — null on every ordinary transaction, so this is a
+        // no-op fallback to the full amount everywhere else.
+        const amt = t.type === 'income' ? Number(t.amount) : Number(t.expense_amount ?? t.amount)
         const mk = t.transaction_date.slice(0, 7)
         const name = t.category?.name ?? 'Uncategorized'
         const color = t.category?.color ?? '#7C9B95'

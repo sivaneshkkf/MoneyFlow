@@ -95,7 +95,9 @@ export default function TransactionsView({ lockedType = null, title, subtitle, t
   const summary = useMemo(() => {
     const list = query.data?.rows ?? []
     const income = list.filter((r) => r.type === 'income').reduce((s, r) => s + Number(r.amount), 0)
-    const expense = list.filter((r) => r.type === 'expense').reduce((s, r) => s + Number(r.amount), 0)
+    const expense = list
+      .filter((r) => r.type === 'expense')
+      .reduce((s, r) => s + Number(r.expense_amount ?? r.amount), 0)
     return { income, expense }
   }, [query.data])
 
@@ -250,8 +252,16 @@ export default function TransactionsView({ lockedType = null, title, subtitle, t
                               {t.source === 'lending_interest' && (
                                 <Badge tone="info">Interest</Badge>
                               )}
+                              {t.source === 'loan_emi_payment' && <Badge tone="neutral">EMI</Badge>}
                             </p>
-                            {t.notes && <p className="truncate text-xs text-ink-soft">{t.notes}</p>}
+                            {t.source === 'loan_emi_payment' && t.expense_amount != null ? (
+                              <p className="truncate text-xs text-ink-soft">
+                                Principal {formatCurrency(Number(t.amount) - Number(t.expense_amount))} · Interest{' '}
+                                {formatCurrency(t.expense_amount)}
+                              </p>
+                            ) : (
+                              t.notes && <p className="truncate text-xs text-ink-soft">{t.notes}</p>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -335,6 +345,12 @@ export default function TransactionsView({ lockedType = null, title, subtitle, t
                     <p className="truncate text-xs text-ink-soft">
                       {t.category?.name || '—'} · {formatFriendlyDate(t.transaction_date)}
                     </p>
+                    {t.source === 'loan_emi_payment' && t.expense_amount != null && (
+                      <p className="truncate text-xs text-ink-soft">
+                        Principal {formatCurrency(Number(t.amount) - Number(t.expense_amount))} · Interest{' '}
+                        {formatCurrency(t.expense_amount)}
+                      </p>
+                    )}
                   </div>
                   <span className={`shrink-0 font-semibold ${t.type === 'income' ? 'text-success' : 'text-danger'}`}>
                     {t.type === 'income' ? '+' : '-'}
