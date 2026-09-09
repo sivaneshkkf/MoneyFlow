@@ -157,7 +157,7 @@ export default function PricingPage() {
         )}
       </div>
 
-      <div className="mx-auto mt-8 grid max-w-3xl gap-6 sm:grid-cols-2">
+      <div className="mx-auto mt-8 grid max-w-5xl gap-6 sm:grid-cols-3">
         <PricingCard plan={free} billingCycle={billingCycle} isCurrent={Boolean(user) && !isPro} onSelect={() => {}} />
         <PricingCard
           plan={pro}
@@ -166,28 +166,28 @@ export default function PricingPage() {
           loading={checkout.isPending}
           onSelect={onSelectPro}
         />
-      </div>
-
-      <p className="mx-auto mt-6 flex max-w-3xl items-center justify-center gap-1.5 text-center text-xs text-ink-soft">
-        <ShieldCheck className="h-3.5 w-3.5 text-success" /> Secure payments powered by Razorpay
-      </p>
-
-      <div className="mx-auto mt-8 max-w-md">
         {user ? (
           <CustomOfferCard offer={customOffer} />
         ) : (
-          <div className="card p-6 text-center">
-            <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-700 dark:bg-white/5 dark:text-brand-400">
+          <div className="flex h-full flex-col rounded-2xl border border-line bg-white p-6 text-center dark:border-white/10 dark:bg-[#161F1D]">
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-violet-500/15 text-violet-600 dark:bg-violet-400/15 dark:text-violet-400">
               <Sparkles className="h-5 w-5" />
             </span>
-            <h3 className="mt-3 text-base font-bold">Need something different?</h3>
-            <p className="mt-1 text-sm text-ink-soft">Create a free account to request a custom plan tailored to you.</p>
-            <Link to="/register" className="btn-primary mt-4">
-              Get Started
+            <p className="mt-3 text-sm font-bold uppercase tracking-wide">Custom</p>
+            <p className="mt-1 text-sm text-ink-soft">Tailored for you.</p>
+            <p className="mt-4 text-3xl font-extrabold tracking-tight">Custom</p>
+            <p className="mt-0.5 text-xs text-ink-soft">Flexible pricing based on your needs.</p>
+            <p className="mt-5 flex-1 text-sm text-ink-soft">Create a free account to request a custom plan tailored to you.</p>
+            <Link to="/register" className="btn-primary mt-6 w-full justify-center">
+              Get started
             </Link>
           </div>
         )}
       </div>
+
+      <p className="mx-auto mt-6 flex max-w-5xl items-center justify-center gap-1.5 text-center text-xs text-ink-soft">
+        <ShieldCheck className="h-3.5 w-3.5 text-success" /> Secure payments powered by Razorpay
+      </p>
 
       <div className="mx-auto mt-14 max-w-3xl">
         <h2 className="mb-4 text-center text-lg font-bold">Compare plans</h2>
