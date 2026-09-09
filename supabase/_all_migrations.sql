@@ -8273,7 +8273,17 @@ grant execute on function public.delete_recurring_payment(uuid, boolean) to auth
 --    coalesce(expense_amount, amount) instead of amount. NULL on every
 --    existing/ordinary transaction means this is a no-op for everything
 --    except the new EMI payment transactions.
+--
+--    DROP first: CREATE OR REPLACE cannot change a function's OUT-parameter
+--    row shape, only its body -- Postgres requires an explicit DROP even
+--    though this returns the exact same columns as before, because the
+--    live database's currently-deployed version of this function may not
+--    byte-for-byte match this migration file's history (it was already
+--    replaced at least once this same way, see the "drop function" already
+--    further up this project's own migration history for this exact
+--    function).
 -- ---------------------------------------------------------------------------
+drop function if exists public.get_monthly_financial_summary(int, int);
 create or replace function public.get_monthly_financial_summary(p_year int, p_month int)
 returns table (
   income numeric,
@@ -8333,6 +8343,7 @@ $$;
 
 grant execute on function public.get_monthly_financial_summary(int,int) to authenticated;
 
+drop function if exists public.get_category_expense_summary(date, date);
 create or replace function public.get_category_expense_summary(p_from date, p_to date)
 returns table (category_id uuid, category_name text, color text, total numeric)
 language sql
