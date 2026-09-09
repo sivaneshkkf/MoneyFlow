@@ -157,7 +157,7 @@ export default function PricingPage() {
         )}
       </div>
 
-      <div className="mx-auto mt-8 grid max-w-5xl gap-6 sm:grid-cols-3">
+      <div className="mx-auto mt-8 grid max-w-7xl gap-6 sm:grid-cols-3">
         <PricingCard plan={free} billingCycle={billingCycle} isCurrent={Boolean(user) && !isPro} onSelect={() => {}} />
         <PricingCard
           plan={pro}
@@ -169,7 +169,7 @@ export default function PricingPage() {
         {user ? (
           <CustomOfferCard offer={customOffer} />
         ) : (
-          <div className="flex h-full flex-col rounded-2xl border border-line bg-white p-6 text-center dark:border-white/10 dark:bg-[#161F1D]">
+          <div className="flex h-full flex-col rounded-2xl border border-violet-300/50 bg-gradient-to-b from-violet-50/50 to-white p-6 text-center shadow-sm dark:border-violet-400/20 dark:from-violet-500/5 dark:to-transparent">
             <span className="grid h-11 w-11 place-items-center rounded-xl bg-violet-500/15 text-violet-600 dark:bg-violet-400/15 dark:text-violet-400">
               <Sparkles className="h-5 w-5" />
             </span>
@@ -178,14 +178,17 @@ export default function PricingPage() {
             <p className="mt-4 text-3xl font-extrabold tracking-tight">Custom</p>
             <p className="mt-0.5 text-xs text-ink-soft">Flexible pricing based on your needs.</p>
             <p className="mt-5 flex-1 text-sm text-ink-soft">Create a free account to request a custom plan tailored to you.</p>
-            <Link to="/register" className="btn-primary mt-6 w-full justify-center">
+            <Link
+              to="/register"
+              className="mt-6 flex w-full items-center justify-center rounded-lg bg-violet-600 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
+            >
               Get started
             </Link>
           </div>
         )}
       </div>
 
-      <p className="mx-auto mt-6 flex max-w-5xl items-center justify-center gap-1.5 text-center text-xs text-ink-soft">
+      <p className="mx-auto mt-6 flex max-w-7xl items-center justify-center gap-1.5 text-center text-xs text-ink-soft">
         <ShieldCheck className="h-3.5 w-3.5 text-success" /> Secure payments powered by Razorpay
       </p>
 

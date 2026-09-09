@@ -26,8 +26,8 @@ export default function PricingCard({ plan, billingCycle, isCurrent, onSelect, l
       )}
     >
       {isPro && (
-        <span className="absolute -top-3 right-4 inline-flex items-center gap-1 rounded-full bg-dark px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white dark:bg-brand-700">
-          <Sparkles className="h-3 w-3" /> Most popular
+        <span className="absolute -top-3 right-4 inline-flex items-center gap-1 rounded-full bg-dark px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm dark:bg-brand-700">
+          <Crown className="h-3 w-3" /> Most popular
         </span>
       )}
 
@@ -53,10 +53,12 @@ export default function PricingCard({ plan, billingCycle, isCurrent, onSelect, l
 
       <div className="my-5 border-t border-line dark:border-white/10" />
 
-      <ul className="flex-1 space-y-2.5">
+      <ul className="flex-1 space-y-3">
         {features.map((f) => (
           <li key={f} className="flex items-start gap-2.5 text-sm">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" strokeWidth={2.5} />
+            <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-success/15 text-success">
+              <Check className="h-3 w-3" strokeWidth={3} />
+            </span>
             {f}
           </li>
         ))}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Check, Sparkles, MessageCircle, Clock } from 'lucide-react'
+import clsx from 'clsx'
 import ConfirmDialog from '../../../components/common/ConfirmDialog'
 import { useToast } from '../../../components/common/ToastProvider'
 import { friendlyError } from '../../../utils/errors'
@@ -19,11 +20,41 @@ const CUSTOM_FEATURES = [
   'Ideal for power users, families & businesses',
 ]
 
-/** Shared card shell — matches PricingCard's Free/Pro columns so all three sit
- * flush in one row. */
-function Shell({ children }) {
+/** Violet checklist bullet — the Custom card's own accent, distinct from the
+ * teal ones on Free/Pro. */
+function CustomFeatureList({ className }) {
   return (
-    <div className="relative flex h-full flex-col rounded-2xl border border-line bg-white p-6 transition dark:border-white/10 dark:bg-[#161F1D]">
+    <ul className={clsx('space-y-3', className)}>
+      {CUSTOM_FEATURES.map((f) => (
+        <li key={f} className="flex items-start gap-2.5 text-sm">
+          <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-violet-500/15 text-violet-600 dark:bg-violet-400/20 dark:text-violet-400">
+            <Check className="h-3 w-3" strokeWidth={3} />
+          </span>
+          {f}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Shared card shell — matches PricingCard's Free/Pro columns so all three sit
+ * flush in one row, with the Custom tier's own soft violet accent (brighter
+ * once it's the signed-in user's active plan). */
+function Shell({ active, badge, children }) {
+  return (
+    <div
+      className={clsx(
+        'relative flex h-full flex-col rounded-2xl border p-6 shadow-sm transition',
+        active
+          ? 'border-violet-400/60 bg-gradient-to-b from-violet-100/70 to-white dark:from-violet-500/15 dark:to-transparent'
+          : 'border-violet-300/50 bg-gradient-to-b from-violet-50/50 to-white dark:border-violet-400/20 dark:from-violet-500/5 dark:to-transparent',
+      )}
+    >
+      {badge && (
+        <span className="absolute -top-3 right-4 inline-flex items-center gap-1 rounded-full bg-violet-600 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+          <Check className="h-3 w-3" strokeWidth={3} /> Current plan
+        </span>
+      )}
       {children}
     </div>
   )
@@ -89,18 +120,14 @@ export default function CustomOfferCard({ offer }) {
         <p className="mt-4 text-3xl font-extrabold tracking-tight">Custom</p>
         <p className="mt-0.5 text-xs text-ink-soft">Flexible pricing based on your needs.</p>
 
-        <div className="my-5 border-t border-line dark:border-white/10" />
+        <div className="my-5 border-t border-violet-300/40 dark:border-violet-400/15" />
 
-        <ul className="flex-1 space-y-2.5">
-          {CUSTOM_FEATURES.map((f) => (
-            <li key={f} className="flex items-start gap-2.5 text-sm">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" strokeWidth={2.5} />
-              {f}
-            </li>
-          ))}
-        </ul>
+        <CustomFeatureList className="flex-1" />
 
-        <button className="btn-ghost mt-6 w-full justify-center border border-line dark:border-white/10" onClick={() => setRequestOpen(true)}>
+        <button
+          className="mt-6 flex w-full items-center justify-center rounded-lg border border-violet-400/50 py-2.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-400/10"
+          onClick={() => setRequestOpen(true)}
+        >
           Get started
         </button>
         <RequestCustomPlanModal open={requestOpen} onClose={() => setRequestOpen(false)} />
@@ -134,7 +161,10 @@ export default function CustomOfferCard({ offer }) {
           <h3 className="text-base font-bold">Offer expired</h3>
           <p className="mt-1 text-sm text-ink-soft">This custom offer is no longer valid.</p>
         </div>
-        <button className="btn-primary mt-6 w-full justify-center" onClick={() => setRequestOpen(true)}>
+        <button
+          className="mt-6 flex w-full items-center justify-center rounded-lg bg-violet-600 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
+          onClick={() => setRequestOpen(true)}
+        >
           Request a Quote
         </button>
         <RequestCustomPlanModal open={requestOpen} onClose={() => setRequestOpen(false)} />
@@ -150,7 +180,11 @@ export default function CustomOfferCard({ offer }) {
           <h3 className="text-base font-bold">Payment in progress</h3>
           <p className="mt-1 text-sm text-ink-soft">Finish your payment to activate your custom plan.</p>
         </div>
-        <button className="btn-primary mt-6 w-full justify-center" onClick={onResumePayment} disabled={resumePayment.isPending}>
+        <button
+          className="mt-6 flex w-full items-center justify-center rounded-lg bg-violet-600 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-60"
+          onClick={onResumePayment}
+          disabled={resumePayment.isPending}
+        >
           {resumePayment.isPending ? 'Opening checkout…' : 'Continue to payment'}
         </button>
       </Shell>
@@ -159,7 +193,7 @@ export default function CustomOfferCard({ offer }) {
 
   if (offer.status === 'active') {
     return (
-      <Shell>
+      <Shell active badge>
         <Header eyebrow="Tailored for you." />
 
         <div className="mt-4 flex items-baseline gap-1">
@@ -168,18 +202,14 @@ export default function CustomOfferCard({ offer }) {
         </div>
         <p className="mt-0.5 text-xs text-ink-soft">Flexible pricing based on your needs.</p>
 
-        <div className="my-5 border-t border-line dark:border-white/10" />
+        <div className="my-5 border-t border-violet-300/40 dark:border-violet-400/15" />
 
-        <ul className="flex-1 space-y-2.5">
-          {CUSTOM_FEATURES.map((f) => (
-            <li key={f} className="flex items-start gap-2.5 text-sm">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" strokeWidth={2.5} />
-              {f}
-            </li>
-          ))}
-        </ul>
+        <CustomFeatureList className="flex-1" />
 
-        <button className="btn-ghost mt-6 w-full justify-center border border-violet-500/30 text-violet-700 dark:text-violet-400" disabled>
+        <button
+          className="mt-6 flex w-full cursor-default items-center justify-center rounded-lg bg-violet-200/70 py-2.5 text-sm font-bold text-violet-800 dark:bg-violet-400/20 dark:text-violet-300"
+          disabled
+        >
           Current plan
         </button>
       </Shell>
@@ -194,11 +224,6 @@ export default function CustomOfferCard({ offer }) {
 
   return (
     <Shell>
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.14), transparent 70%)' }}
-      />
       <Header eyebrow={priceAccepted ? 'Your Custom Plan' : 'Special offer for you.'} />
 
       {requestedDifferent ? (
@@ -228,26 +253,23 @@ export default function CustomOfferCard({ offer }) {
       </p>
 
       {offer.description && offer.offer_source === 'admin_direct' && (
-        <p className="relative mt-3 rounded-lg bg-brand-50 p-2.5 text-sm dark:bg-white/5">&ldquo;{offer.description}&rdquo;</p>
+        <p className="relative mt-3 rounded-lg bg-violet-500/10 p-2.5 text-sm">&ldquo;{offer.description}&rdquo;</p>
       )}
       {offer.admin_message && (
         <p className="relative mt-2 text-sm italic text-ink-soft">&ldquo;{offer.admin_message}&rdquo;</p>
       )}
       {offer.valid_until && <p className="relative mt-2 text-xs text-ink-soft">Valid until {formatDate(offer.valid_until)}</p>}
 
-      <div className="my-5 border-t border-line dark:border-white/10" />
+      <div className="my-5 border-t border-violet-300/40 dark:border-violet-400/15" />
 
-      <ul className="relative flex-1 space-y-2.5">
-        {CUSTOM_FEATURES.map((f) => (
-          <li key={f} className="flex items-start gap-2.5 text-sm">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" strokeWidth={2.5} />
-            {f}
-          </li>
-        ))}
-      </ul>
+      <CustomFeatureList className="relative flex-1" />
 
       <div className="relative mt-6 space-y-2">
-        <button className="btn-primary w-full justify-center" onClick={onAccept} disabled={acceptAndPay.isPending}>
+        <button
+          className="flex w-full items-center justify-center rounded-lg bg-violet-600 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-60"
+          onClick={onAccept}
+          disabled={acceptAndPay.isPending}
+        >
           {acceptAndPay.isPending ? 'Starting checkout…' : 'Accept & Pay →'}
         </button>
         {whatsappLink && (
@@ -255,7 +277,7 @@ export default function CustomOfferCard({ offer }) {
             href={whatsappLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-ghost w-full justify-center border border-line dark:border-white/10"
+            className="btn-ghost w-full justify-center border border-violet-400/50 text-violet-700 dark:text-violet-400"
           >
             <MessageCircle className="h-4 w-4" /> Discuss on WhatsApp
           </a>
