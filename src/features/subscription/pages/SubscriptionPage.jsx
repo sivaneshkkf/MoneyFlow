@@ -39,7 +39,7 @@ function UsageBox({ resource, usage }) {
   if (!usage) return null
   const Icon = RESOURCE_ICON[resource]
   const { used, limit_value: limit, unlimited } = usage
-  const pct = unlimited || !limit ? 100 : Math.min(100, Math.round((used / limit) * 100))
+  const pct = !unlimited && limit ? Math.min(100, Math.round((used / limit) * 100)) : 0
   const nearLimit = !unlimited && limit > 0 && used / limit >= 0.8
 
   return (
@@ -54,12 +54,19 @@ function UsageBox({ resource, usage }) {
         <span className={clsx('font-semibold', nearLimit && 'text-warning')}>{used}</span>
         <span className="text-ink-soft"> / {unlimited ? 'Unlimited' : limit}</span>
       </p>
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-brand-400/15 dark:bg-white/10">
-        <div
-          className={clsx('h-full rounded-full', !unlimited && pct >= 100 ? 'bg-danger' : nearLimit ? 'bg-warning' : 'bg-success')}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+      {/* A percent-of-limit bar has nothing to measure when there's no cap —
+       * showing it full there reads as "maxed out", the opposite of what
+       * Unlimited means. Swap it for a plain "no limit" note instead. */}
+      {unlimited ? (
+        <p className="mt-2 text-[11px] font-medium text-success">No limit on your plan</p>
+      ) : (
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-brand-400/15 dark:bg-white/10">
+          <div
+            className={clsx('h-full rounded-full', pct >= 100 ? 'bg-danger' : nearLimit ? 'bg-warning' : 'bg-success')}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
     </div>
   )
 }
