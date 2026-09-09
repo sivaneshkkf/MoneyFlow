@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../auth/AuthProvider'
-import { fetchMySubscription, fetchPlans } from '../services/subscriptionService'
+import { fetchMySubscription, fetchPlans, fetchMyBillingHistory } from '../services/subscriptionService'
 import { isUnlimited } from '../subscriptionMeta'
 
 const KEY = ['subscription', 'me']
@@ -63,5 +63,15 @@ export function usePlans() {
     queryKey: ['subscription', 'plans'],
     queryFn: fetchPlans,
     staleTime: 5 * 60_000,
+  })
+}
+
+export function useBillingHistory(limit = 5) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['subscription', 'billing-history', user?.id, limit],
+    enabled: Boolean(user?.id),
+    queryFn: () => fetchMyBillingHistory(limit),
+    staleTime: 60_000,
   })
 }

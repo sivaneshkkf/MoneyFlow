@@ -63,3 +63,39 @@ export async function resumeMySubscription() {
   if (error) throw error
   return data
 }
+
+// Payment/renewal events only — subscription_events is an append-only log of
+// every webhook Razorpay ever sent us (activations, renewals, failures,
+// cancellations…). RLS lets a user select only their own rows directly (no
+// RPC needed). We only surface the event types that represent an actual
+// successful charge; the amount is read straight off Razorpay's own
+// payment.entity.amount (paise) when present, never invented.
+const CHARGE_EVENT_TYPES = ['subscription.activated', 'subscription.charged', 'subscription.renewed', 'invoice.paid']
+
+const EVENT_DESCRIPTION = {
+  'subscription.activated': 'Plan activated',
+  'subscription.charged': 'Plan renewal',
+  'subscription.renewed': 'Plan renewal',
+  'invoice.paid': 'Invoice paid',
+}
+
+function extractPaidAmount(payload) {
+  const paise = payload?.payload?.payment?.entity?.amount
+  return paise != null ? Number(paise) / 100 : null
+}
+
+export async function fetchMyBillingHistory(limit = 5) {
+  const { data, error } = await supabase
+    .from('subscription_events')
+    .select('id, event_type, payload, created_at')
+    .in('event_type', CHARGE_EVENT_TYPES)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return (data ?? []).map((e) => ({
+    id: e.id,
+    date: e.created_at,
+    description: EVENT_DESCRIPTION[e.event_type] ?? e.event_type,
+    amount: extractPaidAmount(e.payload),
+  }))
+}
