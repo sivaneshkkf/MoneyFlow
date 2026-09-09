@@ -135,7 +135,7 @@ export default function SubscriptionPage() {
         <p className="mt-1 text-sm text-ink-soft">Manage your plan, usage, and billing details.</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+      <div className="grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
         {/* Left column */}
         <div className="space-y-6">
           <div
