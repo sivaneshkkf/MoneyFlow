@@ -106,12 +106,12 @@ Deno.serve(async (req) => {
           if (status === 404 || status === 410) {
             staleEndpoints.add(s.endpoint as string)
           } else {
-            console.error('send-push-notifications: delivery failed', alert.id, status, err)
+            console.error('send-push-notifications: delivery failed', alert.alert_id, status, err)
           }
         }
       }),
     )
-    pushedAlertIds.push(alert.id as string)
+    pushedAlertIds.push(alert.alert_id as string)
   }
 
   if (pushedAlertIds.length > 0) {
