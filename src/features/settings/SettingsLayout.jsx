@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import clsx from 'clsx'
-import { Settings, User, SlidersHorizontal, Tag, CreditCard, Wallet, ShieldCheck, Sparkles } from 'lucide-react'
+import { Settings, User, SlidersHorizontal, Tag, CreditCard, Wallet, ShieldCheck, Sparkles, Bell } from 'lucide-react'
 import { PageContainer } from '../../components/common'
 
 const tabs = [
   { to: '/settings/profile', label: 'Profile', icon: User },
   { to: '/settings/preferences', label: 'Preferences', icon: SlidersHorizontal },
+  { to: '/settings/notifications', label: 'Notifications', icon: Bell },
   { to: '/settings/categories', label: 'Categories', icon: Tag },
   { to: '/settings/accounts', label: 'Accounts', icon: CreditCard },
   { to: '/settings/payment-methods', label: 'Payment Methods', icon: Wallet },

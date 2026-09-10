@@ -12,6 +12,17 @@ export default defineConfig({
       // hand-written public/sw.js + manual navigator.serviceWorker.register
       // call in main.jsx.
       registerType: 'autoUpdate',
+      // 049: switched from Workbox's fully auto-generated service worker
+      // (generateSW) to injectManifest — push notifications need a real
+      // `push` / `notificationclick` handler, which only a hand-written
+      // service worker source file can have. src/sw.js still gets the same
+      // precaching Workbox was already doing (see precacheAndRoute there).
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
+      injectManifest: {
+        injectionPoint: 'self.__WB_MANIFEST',
+      },
       includeAssets: [
         'icon-192.png', 'icon-512.png', 'icon-192-maskable.png', 'icon-512-maskable.png',
         'logo.png', 'screenshot1.png', 'screenshot2.png',
@@ -57,12 +68,6 @@ export default defineConfig({
           { src: '/screenshot1.png', sizes: '1909x1031', type: 'image/png', form_factor: 'wide', label: 'MoneyFlow Dashboard' },
           { src: '/screenshot2.png', sizes: '1905x1031', type: 'image/png', form_factor: 'wide', label: 'MoneyFlow Accounts' },
         ],
-      },
-      workbox: {
-        // App-shell caching only — never cache Supabase/API traffic, same
-        // rule the old sw.js followed.
-        navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [],
       },
     }),
   ],

@@ -43,6 +43,7 @@ const AdminSettingsPage = lazy(() => import('../features/admin/pages/AdminSettin
 const SettingsLayout = lazy(() => import('../features/settings/SettingsLayout'))
 const ProfilePage = lazy(() => import('../features/settings/ProfilePage'))
 const PreferencesPage = lazy(() => import('../features/settings/PreferencesPage'))
+const NotificationsPage = lazy(() => import('../features/settings/NotificationsPage'))
 const CategoriesPage = lazy(() => import('../features/settings/CategoriesPage'))
 const PaymentMethodsPage = lazy(() => import('../features/settings/PaymentMethodsPage'))
 const SecurityPage = lazy(() => import('../features/settings/SecurityPage'))
@@ -98,6 +99,7 @@ export default function AppRoutes() {
             <Route index element={<Navigate to="/settings/profile" replace />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="preferences" element={<PreferencesPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="accounts" element={<AccountsPage />} />
             <Route path="payment-methods" element={<PaymentMethodsPage />} />
