@@ -83,8 +83,8 @@ export default function NotificationsPage() {
             >
               <span
                 className={clsx(
-                  'absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform',
-                  enabled ? 'translate-x-[22px]' : 'translate-x-0.5',
+                  'absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform',
+                  enabled ? 'translate-x-5' : 'translate-x-0',
                 )}
               />
             </button>
